@@ -1,8 +1,13 @@
 package com.example.movienew.data
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import com.example.movienew.model.Movie
+import com.example.movienew.screens.isOnline
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -14,12 +19,27 @@ object BookmarkManager {
 
     fun getBookmarks(): List<Movie> = bookmarks
 
-    fun addBookmark(movie: Movie) {
+    fun addBookmark(context: Context, movie: Movie) {
+        if (!isOnline(context)) {
+            Toast.makeText(context, "Cannot add bookmark during offline", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (!bookmarks.any { it.title == movie.title }) {
             bookmarks.add(movie)
             saveToFirestore(movie)
         }
     }
+
+        private fun isOnline(context: Context): Boolean {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
+
+
+
 
     fun removeBookmark(movie: Movie) {
         bookmarks.removeAll { it.title == movie.title }
@@ -80,3 +100,4 @@ object BookmarkManager {
         }
     }
 }
+
