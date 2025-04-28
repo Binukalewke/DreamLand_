@@ -107,72 +107,90 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
 
                     isLoading = true
 
-                    val savedEmail = LocalStorage.getEmail(context)
-                    val savedPassword = LocalStorage.getPassword(context)
+                    if (!isOnline(context)) {
+                        // No internet - Offline login
+                        val savedEmail = LocalStorage.getEmail(context)
+                        val savedPassword = LocalStorage.getPassword(context)
 
-                    if (email == savedEmail && password == savedPassword) {
-                        // OFFLINE LOGIN
-                        Toast.makeText(context, "Logged in offline", Toast.LENGTH_SHORT).show()
-                        UserSession.email = email
-                        UserSession.password = password
-                        UserSession.username = "Offline User"
-                        isOfflineLogin = true
-                        isLoading = false
+                        if (email == savedEmail && password == savedPassword) {
+                            Toast.makeText(context, "Logged in offline", Toast.LENGTH_SHORT).show()
+                            UserSession.email = email
+                            UserSession.password = password
+                            UserSession.username = LocalStorage.getUsername(context) ?: "Offline User"
+                            isOfflineLogin = true
+                            isLoading = false
 
-                        navController.navigate("main") {
-                            popUpTo("login") { inclusive = true }
+                            navController.navigate("main") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            errorMessage = "Offline login failed. Incorrect credentials."
+                            isLoading = false
                         }
 
                         return@Button
-                    } else {
-                        // 🔐 Only here if local login failed
+                    }
 
-                        if (!isOnline(context)) {
-                            errorMessage = "Incorrect credentials for Offline User."
+                    // Internet available - Try Firebase Login first
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
                             isLoading = false
-                            return@Button
-                        }
+                            if (task.isSuccessful) {
+                                val userId = auth.currentUser?.uid
+                                if (userId != null) {
+                                    firestore.collection("users").document(userId)
+                                        .get()
+                                        .addOnSuccessListener { document ->
+                                            if (document.exists()) {
+                                                val username = document.getString("username") ?: "Unknown"
+                                                val emailFromDb = document.getString("email") ?: ""
 
-                        auth.signInWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { task ->
-                                isLoading = false
-                                if (task.isSuccessful) {
-                                    val userId = auth.currentUser?.uid
-                                    if (userId != null) {
-                                        firestore.collection("users").document(userId)
-                                            .get()
-                                            .addOnSuccessListener { document ->
-                                                if (document.exists()) {
-                                                    val username = document.getString("username") ?: "Unknown"
-                                                    val emailFromDb = document.getString("email") ?: ""
+                                                //  Save session in UserSession
+                                                UserSession.username = username
+                                                UserSession.email = emailFromDb
+                                                UserSession.password = password
+                                                isOfflineLogin = false
 
-                                                    UserSession.username = username
-                                                    UserSession.email = emailFromDb
-                                                    UserSession.password = password
-                                                    isOfflineLogin = false
+                                                //  Save credentials locally with username!
+                                                LocalStorage.saveCredentials(context, emailFromDb, password, username)
 
-                                                    CoroutineScope(Dispatchers.IO).launch {
-                                                        BookmarkManager.loadBookmarksFromFirestore()
-                                                    }
-
-                                                    navController.navigate("main") {
-                                                        popUpTo("login") { inclusive = true }
-                                                    }
-                                                } else {
-                                                    errorMessage = "User data not found."
+                                                // Load bookmarks
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    BookmarkManager.loadBookmarksFromFirestore()
                                                 }
+
+                                                navController.navigate("main") {
+                                                    popUpTo("login") { inclusive = true }
+                                                }
+                                            } else {
+                                                errorMessage = "User data not found."
                                             }
-                                            .addOnFailureListener {
-                                                errorMessage = "Failed to retrieve user data."
-                                            }
-                                    } else {
-                                        errorMessage = "User ID not found."
+                                        }
+                                        .addOnFailureListener {
+                                            errorMessage = "Failed to fetch user data."
+                                        }
+                                } else {
+                                    errorMessage = "User ID not found."
+                                }
+                            } else {
+                                // Firebase login failed, try offline login fallback
+                                val savedEmail = LocalStorage.getEmail(context)
+                                val savedPassword = LocalStorage.getPassword(context)
+
+                                if (email == savedEmail && password == savedPassword) {
+                                    Toast.makeText(context, "Logged in offline", Toast.LENGTH_SHORT).show()
+                                    UserSession.email = email
+                                    UserSession.password = password
+                                    UserSession.username = LocalStorage.getUsername(context) ?: "Offline User"
+                                    isOfflineLogin = true
+                                    navController.navigate("main") {
+                                        popUpTo("login") { inclusive = true }
                                     }
                                 } else {
                                     errorMessage = task.exception?.message ?: "Login failed."
                                 }
                             }
-                    }
+                        }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading
