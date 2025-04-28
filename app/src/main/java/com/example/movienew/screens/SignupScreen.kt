@@ -146,7 +146,7 @@ fun SignUpScreen(navController: NavController, auth: FirebaseAuth) {
                                         .set(user)
                                         .addOnSuccessListener {
                                             // save credentails locally
-                                            LocalStorage.saveCredentials(context, email, password)
+                                            LocalStorage.saveCredentials(context, email, password, username)
                                             Toast.makeText(context, "Sign up successful!", Toast.LENGTH_SHORT).show()
                                             navController.navigate("login") {
                                                 popUpTo("signup") { inclusive = true }
