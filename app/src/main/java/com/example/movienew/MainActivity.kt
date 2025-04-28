@@ -1,6 +1,7 @@
 package com.example.movienew
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
@@ -41,7 +42,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.movienew.data.BookmarkManager
 import com.example.movienew.data.DataSource
+import com.example.movienew.data.NetworkStatusListener
+import com.example.movienew.data.UserSession
 import com.example.movienew.model.Movie
 import com.example.movienew.ui.theme.MovieNewTheme
 import com.example.movienew.screens.BookmarkScreen
@@ -56,6 +60,8 @@ import com.example.movienew.ui.theme.Blue
 import com.example.movienew.ui.theme.beige
 import com.example.movienew.ui.theme.staryellow
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 
 class MainActivity : ComponentActivity() {
@@ -79,6 +85,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    NetworkStatusListener()
+
                     val navController = rememberNavController()
 
                     //  Slightly enhance AppNavigation to support toggling
@@ -94,78 +102,95 @@ class MainActivity : ComponentActivity() {
 
     }
 
-// Navigation
-@Composable
-fun AppNavigation(
-    auth: FirebaseAuth,
-    navController: NavHostController,
-    isDarkMode: Boolean,
-    toggleDarkMode: () -> Unit
-) {
-    val context = LocalContext.current
-
-    // ✅ Determine start destination using both Firebase and local session
-    val startDestination = remember {
-        if (auth.currentUser != null || LocalStorage.isUserLoggedInLocally(context)) {
-            "main"
-        } else {
-            "signup"
-        }
-    }
-
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
+    @Composable
+    fun AppNavigation(
+        auth: FirebaseAuth,
+        navController: NavHostController,
+        isDarkMode: Boolean,
+        toggleDarkMode: () -> Unit
     ) {
-        composable("signup") {
-            SignUpScreen(navController, auth)
-        }
-        composable("login") {
-            LoginScreen(navController, auth)
-        }
-        composable("main") {
-            MainScreen(
-                navController = navController,
-                isDarkMode = isDarkMode,
-                onToggleTheme = toggleDarkMode
-            )
-        }
-        composable("profile") {
-            ProfileScreen(
-                navController = navController,
-                isDarkMode = isDarkMode,
-                onToggleTheme = toggleDarkMode
-            )
-        }
-        composable("editProfile") {
-            EditProfileScreen(navController)
+        val context = LocalContext.current
+
+        var isInitialized by remember { mutableStateOf(false) }
+
+        // 👇 First initialize user session + bookmarks
+        LaunchedEffect(Unit) {
+            if (auth.currentUser != null) {
+                // 🔥 1. Load bookmarks
+                BookmarkManager.loadBookmarksFromFirestore()
+
+                // 🔥 2. Load user details from Firestore
+                val userId = auth.currentUser?.uid
+                if (userId != null) {
+                    val firestore = FirebaseFirestore.getInstance()
+                    val document = firestore.collection("users").document(userId).get().await()
+                    if (document.exists()) {
+                        UserSession.username = document.getString("username") ?: "Guest"
+                        UserSession.email = document.getString("email") ?: ""
+                        // No password stored in Firestore for security, only local
+                        UserSession.password = LocalStorage.getPassword(context) ?: ""
+                    }
+                }
+            } else if (LocalStorage.isUserLoggedInLocally(context)) {
+                // Local offline login
+                UserSession.username = LocalStorage.getUsername(context) ?: ""
+                UserSession.email = LocalStorage.getEmail(context) ?: ""
+                UserSession.password = LocalStorage.getPassword(context) ?: ""
+
+                Toast.makeText(context, "Offline Mode", Toast.LENGTH_SHORT).show()
+
+            }
+            isInitialized = true
         }
 
-        // ✅ Movie Details - JSON-safe argument passing
-        composable(
-            "movieDetails/{movieTitle}/{moviePoster}/{movieRating}/{movieDescription}",
-            arguments = listOf(
-                navArgument("movieTitle") { type = NavType.StringType },
-                navArgument("moviePoster") { type = NavType.StringType },
-                navArgument("movieRating") { type = NavType.StringType },
-                navArgument("movieDescription") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val movieTitle = backStackEntry.arguments?.getString("movieTitle") ?: ""
-            val moviePoster = backStackEntry.arguments?.getString("moviePoster") ?: ""
-            val movieRating = backStackEntry.arguments?.getString("movieRating")?.toDoubleOrNull() ?: 0.0
-            val movieDescription = backStackEntry.arguments?.getString("movieDescription") ?: ""
+        if (!isInitialized) {
+            // While loading
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            // ✅ After initialization
+            val startDestination = if (auth.currentUser != null || LocalStorage.isUserLoggedInLocally(context)) {
+                "main"
+            } else {
+                "signup"
+            }
 
-            ViewScreen(
-                movieTitle = movieTitle,
-                moviePoster = moviePoster,
-                movieRating = movieRating,
-                movieDescription = movieDescription,
-                navController = navController
-            )
+            NavHost(
+                navController = navController,
+                startDestination = startDestination
+            ) {
+                composable("signup") { SignUpScreen(navController, auth) }
+                composable("login") { LoginScreen(navController, auth) }
+                composable("main") { MainScreen(navController, isDarkMode, toggleDarkMode) }
+                composable("profile") { ProfileScreen(navController, isDarkMode, toggleDarkMode) }
+                composable("editProfile") { EditProfileScreen(navController) }
+                composable(
+                    "movieDetails/{movieTitle}/{moviePoster}/{movieRating}/{movieDescription}",
+                    arguments = listOf(
+                        navArgument("movieTitle") { type = NavType.StringType },
+                        navArgument("moviePoster") { type = NavType.StringType },
+                        navArgument("movieRating") { type = NavType.StringType },
+                        navArgument("movieDescription") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val movieTitle = backStackEntry.arguments?.getString("movieTitle") ?: ""
+                    val moviePoster = backStackEntry.arguments?.getString("moviePoster") ?: ""
+                    val movieRating = backStackEntry.arguments?.getString("movieRating")?.toDoubleOrNull() ?: 0.0
+                    val movieDescription = backStackEntry.arguments?.getString("movieDescription") ?: ""
+
+                    ViewScreen(
+                        movieTitle = movieTitle,
+                        moviePoster = moviePoster,
+                        movieRating = movieRating,
+                        movieDescription = movieDescription,
+                        navController = navController
+                    )
+                }
+            }
         }
     }
-}
+
 
 
 
