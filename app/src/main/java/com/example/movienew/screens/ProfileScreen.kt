@@ -1,5 +1,6 @@
 package com.example.movienew.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,25 +14,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavController
 import com.example.movienew.R
 import com.example.movienew.data.UserSession
 import com.example.movienew.ui.theme.Blue
 import com.example.movienew.ui.theme.errorLight
+import com.example.movienew.data.NetworkHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.navigation.NavController
 
 @Composable
-fun ProfileScreen(navController: NavController,isDarkMode: Boolean,onToggleTheme: () -> Unit) {
+fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleTheme: () -> Unit) {
     var editCredentials by remember { mutableStateOf(false) }
     var logoutMessage by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(false) }
-
-
 
     Column(
         modifier = Modifier
@@ -102,7 +103,7 @@ fun ProfileScreen(navController: NavController,isDarkMode: Boolean,onToggleTheme
             ProfileOption(
                 icon = R.drawable.help,
                 title = "Help and Support",
-                onClick = { /* Add navigation if needed */ }
+                onClick = { /* Add future navigation if needed */ }
             )
 
             ProfileOption(
@@ -144,7 +145,6 @@ fun ProfileScreen(navController: NavController,isDarkMode: Boolean,onToggleTheme
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Clear session and sign out
                         UserSession.username = null
                         UserSession.email = null
                         UserSession.password = null
@@ -179,6 +179,7 @@ fun EditDialog(
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
@@ -209,6 +210,11 @@ fun EditDialog(
         },
         confirmButton = {
             TextButton(onClick = {
+                if (!NetworkHelper.isOnline(context)) {
+                    Toast.makeText(context, "Cannot update credentials while offline", Toast.LENGTH_SHORT).show()
+                    return@TextButton
+                }
+
                 if (userId != null) {
                     val updates = mapOf(
                         "username" to username,
@@ -288,10 +294,8 @@ fun ProfileSwitch(
         )
         Spacer(modifier = Modifier.weight(1f))
         Switch(
-            checked = isChecked,           // ✅ bind directly
-            onCheckedChange = { onToggle() } // ✅ toggle theme
+            checked = isChecked,
+            onCheckedChange = { onToggle() }
         )
     }
 }
-
-
