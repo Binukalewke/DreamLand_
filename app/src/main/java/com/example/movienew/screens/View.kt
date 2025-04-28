@@ -118,7 +118,7 @@ fun ViewScreen(
                 onClick = {
                     isBookmarked = !isBookmarked
                     if (isBookmarked) {
-                        BookmarkManager.addBookmark(movie)
+                        BookmarkManager.addBookmark(context,movie)
                     } else {
                         BookmarkManager.removeBookmark(movie)
                     }
