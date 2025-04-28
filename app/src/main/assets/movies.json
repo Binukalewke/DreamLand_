@@ -1,0 +1,210 @@
+[
+  {
+    "title": "Killer Game",
+    "posterName": "movie_poster_3",
+    "rating": 8.0,
+    "description": "Killer Game is a suspenseful thriller that blurs the line between reality and a deadly contest. A group of strangers is invited to play an underground survival game, lured by promises of wealth and fame. However, as the challenges escalate, they realize the stakes are real—one wrong move means death. Betrayals, alliances, and hidden motives drive the intense action as players fight to outwit both the game and each other. With a chilling mastermind pulling the strings, every decision is a matter of life or death. Killer Game delivers relentless tension, shocking twists, and a fight for survival like no other.",
+    "type": "movie",
+    "category": "new"
+  },
+  {
+    "title": "Avengers: Endgame",
+    "posterName": "movie_poster_8",
+    "rating": 8.4,
+    "description": "Avengers: Endgame concludes the epic Infinity Saga, bringing together Earth’s Mightiest Heroes for one final battle against Thanos. After the devastating events of *Infinity War*, the surviving heroes embark on a time-travel mission to retrieve the Infinity Stones and undo the catastrophic snap. Featuring emotional reunions, breathtaking battles, and heroic sacrifices, the film delivers a deeply satisfying conclusion to over a decade of storytelling. Directed by the Russo brothers, *Endgame* is a cinematic event filled with nostalgia, stunning visuals, and powerful performances. It’s a must-watch for Marvel fans, celebrating heroism, teamwork, and the legacy of the Avengers.",
+    "type": "movie",
+    "category": "new"
+  },
+  {
+    "title": "Hot Frosty",
+    "posterName": "movie_poster_2",
+    "rating": 7.9,
+    "description": "Hot Frosty is a heartwarming holiday rom-com starring Lacey Chabert as Kathy, a widow who magically brings a snowman to life, played by Dustin Milligan. As they bond, Kathy rediscovers joy, laughter, and love during the festive season. Filled with magic and holiday cheer, it’s perfect for cozy family viewing!",
+    "type": "movie",
+    "category": "new"
+  },
+  {
+    "title": "Sonic the Hedgehog 3",
+    "posterName": "movie_poster_14",
+    "rating": 7.0,
+    "description": "Sonic the Hedgehog 3 continues the high-speed adventures of Sonic as he faces his greatest challenge yet. When the nefarious Dr. Robotnik returns with an even more dangerous plan, Sonic teams up with Tails and Knuckles to stop him. With new allies, thrilling chases, and jaw-dropping action, Sonic must push his speed to the limit to protect his friends and save the world. Packed with humor, nostalgia, and breathtaking animation, *Sonic the Hedgehog 3* delivers an electrifying adventure for fans of all ages.",
+    "type": "movie",
+    "category": "new"
+  },
+  {
+    "title": "Sentinel",
+    "posterName": "movie_poster_15",
+    "rating": 5.7,
+    "description": "Sentinel is a gripping sci-fi action thriller set in a future where AI-controlled sentinels protect humanity from external threats. However, when one sentinel gains self-awareness and questions its purpose, it becomes the target of both the government and rogue factions. As it uncovers hidden truths about its existence, it must decide whether to fight for its creators or forge its own destiny. With intense action, philosophical themes, and a thought-provoking look at artificial intelligence, *Sentinel* is a thrilling exploration of identity, morality, and the future of technology.",
+    "type": "movie",
+    "category": "new"
+  },
+  {
+    "title": "The Dark Knight",
+    "posterName": "movie_poster_11",
+    "rating": 9.0,
+    "description": "The Dark Knight is a gripping superhero thriller that redefines the battle between good and evil. Gotham City’s vigilante protector, Batman (Christian Bale), faces his greatest challenge yet: the anarchic and unpredictable Joker (Heath Ledger). As chaos consumes the city, Batman, District Attorney Harvey Dent, and Commissioner Gordon struggle to maintain order. With high-stakes action, psychological depth, and moral dilemmas, the film explores the cost of heroism. Christopher Nolan’s masterful direction, stunning cinematography, and Ledger’s legendary performance create an unforgettable cinematic experience. The Dark Knight is a dark, intense, and thought-provoking masterpiece that elevates the superhero genre.",
+    "type": "movie",
+    "category": "popular"
+  },
+  {
+    "title": "Inception",
+    "posterName": "movie_poster_12",
+    "rating": 8.8,
+    "description": "Inception is a mind-bending sci-fi thriller directed by Christopher Nolan, exploring the power of dreams and the nature of reality. Dom Cobb (Leonardo DiCaprio) is a skilled thief who specializes in extracting secrets from peoples subconscious through dream infiltration. Given a chance to clear his past, he must perform the impossible—implant an idea into a target’s mind, known as \"inception.\" As he assembles a team for the dangerous mission, reality and illusion blur in stunning, gravity-defying sequences. With breathtaking visuals, a complex narrative, and an emotional core, Inception is a cinematic masterpiece that challenges perception and redefines storytelling.",
+    "type": "movie",
+    "category": "popular"
+  },
+  {
+    "title": "Interstellar",
+    "posterName": "movie_poster_13",
+    "rating": 8.6,
+    "description": "Interstellar takes you on an epic space voyage beyond the known universe. Directed by Christopher Nolan, the film follows Cooper (Matthew McConaughey), a former pilot turned astronaut, as he embarks on a daring mission through a wormhole to find a habitable planet for humanity. With time dilation, black holes, and emotional depth, the film explores the bond between a father and his daughter while delving into scientific theories about space and time. Featuring stunning visuals, Hans Zimmer’s breathtaking score, and thought-provoking themes, Interstellar is a deeply moving and visually spectacular sci-fi masterpiece that challenges the limits of human exploration.",
+    "type": "movie",
+    "category": "popular"
+  },
+  {
+    "title": "Black Panther",
+    "posterName": "movie_poster_7",
+    "rating": 7.4,
+    "description": "Black Panther follows T’Challa (Chadwick Boseman) as he returns to Wakanda to assume the throne after his father’s death. However, a formidable enemy, Killmonger (Michael B. Jordan), emerges to challenge his rule, forcing T’Challa to defend his kingdom and legacy. This Marvel blockbuster blends African culture with futuristic technology, delivering stunning visuals, powerful themes of identity and responsibility, and thrilling action sequences. Directed by Ryan Coogler, the film’s groundbreaking representation and emotional depth make it a cultural phenomenon. With a star-studded cast, inspiring performances, and an unforgettable soundtrack, Black Panther is a landmark superhero film that celebrates heritage and heroism.",
+    "type": "movie",
+    "category": "popular"
+  },
+  {
+    "title": "Uglies",
+    "posterName": "movie_poster_1",
+    "rating": 8.7,
+    "description": "Uglies is a 2024 American science fiction drama directed by McG, based on Scott Westerfelds novel. Set in a dystopian future, it follows Tally Youngblood (Joey King) in a society where teens undergo mandatory cosmetic surgery at 16 to become \"Pretties.\" The film explores themes of beauty standards and self-acceptance. Released on Netflix on September 13, 2024, it received negative reviews, with critics citing its derivative script and unconvincing execution",
+    "type": "movie",
+    "category": "popular"
+  },
+  {
+    "title": "The Demon Hunter",
+    "posterName": "anime_poster_1",
+    "rating": 9.0,
+    "description": "The Demon Hunter embarks on a perilous quest to rid the world of dark forces threatening humanity. Armed with ancient knowledge and a legendary weapon, the hunter faces powerful demons, uncovering lost secrets along the way. As battles intensify, the hero must overcome personal struggles and embrace their destiny. With intense action, supernatural elements, and a gripping storyline, *The Demon Hunter* immerses viewers in a mystical world of dark magic and heroic sacrifice. This tale of courage and vengeance is a thrilling journey for fans of fantasy and adventure.",
+    "type": "anime",
+    "category": "new"
+  },
+  {
+    "title": "Tales of Herding Gods",
+    "posterName": "anime_poster_4",
+    "rating": 9.2,
+    "description": "A tale of gods and mortals, *Tales of Herding Gods* follows a young protagonist destined for greatness. As he uncovers the mysteries of divine power, he must navigate a world of celestial beings, powerful sects, and ancient prophecies. Filled with intricate lore, breathtaking battles, and deep character development, this story explores the struggle between fate and free will. With rich world-building and compelling themes of self-discovery, *Tales of Herding Gods* is an epic saga that blends mythology with fantasy, offering an unforgettable journey of ascension and enlightenment.",
+    "type": "anime",
+    "category": "new"
+  },
+  {
+    "title": "Endless God Realm",
+    "posterName": "anime_poster_5",
+    "rating": 8.1,
+    "description": "Explore the *Endless God Realm*, a mystical universe where gods, warriors, and mortals clash in an eternal struggle for power. As ancient prophecies unfold, a chosen hero embarks on a perilous journey to uncover hidden truths, master celestial techniques, and challenge the divine hierarchy. With stunning world-building, intense battles, and profound themes of destiny and ambition, this saga takes viewers on an immersive adventure. *Endless God Realm* is a breathtaking epic filled with mythical creatures, powerful deities, and the ultimate quest for immortality.",
+    "type": "anime",
+    "category": "new"
+  },
+  {
+    "title": "Battle of Heavens",
+    "posterName": "anime_poster_6",
+    "rating": 9.5,
+    "description": "An epic battle in the heavens unfolds as warring factions of gods, demons, and mortals clash in a struggle for supremacy. As an unlikely hero rises, they must master forbidden techniques, forge alliances, and confront legendary foes. With dazzling action sequences, rich mythology, and grand celestial warfare, *Battle of Heavens* delivers a high-stakes adventure. This saga of courage, revenge, and destiny is a must-watch for fans of epic fantasy and martial arts storytelling.",
+    "type": "anime",
+    "category": "new"
+  },
+  {
+    "title": "World of Immortals",
+    "posterName": "anime_poster_10",
+    "rating": 9.0,
+    "description": "World of Immortals explores a universe where mortals strive to transcend into immortality through relentless cultivation and celestial trials. In a world ruled by powerful sects, divine beasts, and ancient gods, a young cultivator embarks on a journey to unlock the secrets of eternal life. Facing betrayal, fierce rivalries, and mythical challenges, he must forge his own path in the heavens. With stunning world-building, profound spiritual insights, and thrilling battles, *World of Immortals* delivers a gripping tale of ambition, perseverance, and the pursuit of transcendence.",
+    "type": "anime",
+    "category": "new"
+  },
+  {
+    "title": "Amortal's Journey",
+    "posterName": "anime_poster_2",
+    "rating": 8.5,
+    "description": "Follow a mortal who defies fate, embarking on an extraordinary journey to immortality. With relentless determination, they navigate treacherous lands, ancient sects, and divine trials. As they cultivate unparalleled strength, they challenge the gods themselves. A Mortal’s Journey is an enthralling tale of perseverance, power, and the pursuit of eternal life.",
+    "type": "anime",
+    "category": "popular"
+  },
+  {
+    "title": "Xian Ni",
+    "posterName": "anime_poster_7",
+    "rating": 8.3,
+    "description": "Xian Ni explores mystical cultivation through the journey of Wang Lin, a determined young man who rises from obscurity to become a formidable cultivator. Facing hardships, betrayals, and divine challenges, Wang Lin masters ancient techniques, unearths lost secrets, and forges his own path in a world governed by power. With deep themes of fate, revenge, and personal growth, Xian Ni is a compelling tale of perseverance and ambition. The story blends intense battles, mystical realms, and philosophical insights, making it a must-read for fans of xianxia and epic cultivation adventures.",
+    "type": "anime",
+    "category": "popular"
+  },
+  {
+    "title": "Jian Lai",
+    "posterName": "anime_poster_8",
+    "rating": 9.2,
+    "description": "Jian Lai tells a tale of swords and destiny, following a mysterious swordsman who embarks on a journey of self-discovery and revenge. As he navigates a world of martial arts sects, legendary duels, and hidden conspiracies, he uncovers long-lost sword techniques that could change the balance of power. With poetic storytelling, profound character development, and breathtaking combat, *Jian Lai* explores themes of honor, fate, and the burden of legacy. This epic saga immerses viewers in a realm where swords define destinies and the strongest forge their own legends.",
+    "type": "anime",
+    "category": "popular"
+  },
+  {
+    "title": "Shrouding the Heavens",
+    "posterName": "anime_poster_9",
+    "rating": 8.6,
+    "description": "Shrouding the Heavens* transports viewers into a realm where ancient civilizations, celestial secrets, and powerful cultivators shape destiny. A group of modern-day astronauts stumbles upon an ancient artifact that connects them to an unfathomable past, awakening forces beyond their understanding. As they uncover lost knowledge and challenge divine beings, they must navigate treacherous trials to unlock the mysteries of the universe. This epic saga intertwines mythology, adventure, and profound cultivation techniques, offering an immersive journey into the unknown.",
+    "type": "anime",
+    "category": "popular"
+  },
+  {
+    "title": "Swallowed Star",
+    "posterName": "anime_poster_11",
+    "rating": 8.9,
+    "description": "Swallowed Star is a thrilling sci-fi cultivation adventure set in a post-apocalyptic world where humanity fights for survival against monstrous alien creatures. Luo Feng, a determined young man, rises from adversity to become a legendary warrior, unlocking the secrets of cultivation beyond Earth. As he battles terrifying enemies and explores interstellar mysteries, he discovers his true potential and the vastness of the universe. Blending futuristic technology, martial arts, and an epic power struggle, *Swallowed Star* offers an action-packed journey filled with cosmic battles and a relentless pursuit of strength.",
+    "type": "anime",
+    "category": "popular"
+  },
+  {
+    "title": "Arena Wars",
+    "posterName": "lion2",
+    "rating": 4.8,
+    "description": "Survivors battle in an arena for glory and freedom.",
+    "type": "movie",
+    "category": "banner"
+  },
+  {
+    "title": "Dear Santa",
+    "posterName": "avatar",
+    "rating": 4.5,
+    "description": "A heartfelt story about Christmas miracles.",
+    "type": "movie",
+    "category": "banner"
+  },
+  {
+    "title": "Soul Land (Cars)",
+    "posterName": "cars",
+    "rating": 4.2,
+    "description": "A boy enters a spiritual world of powerful soul masters.",
+    "type": "anime",
+    "category": "banner"
+  },
+  {
+    "title": "Soul Land (Inception)",
+    "posterName": "inception",
+    "rating": 4.2,
+    "description": "A boy enters a spiritual world of powerful soul masters.",
+    "type": "anime",
+    "category": "banner"
+  },
+  {
+    "title": "Soul Land (A)",
+    "posterName": "a",
+    "rating": 4.2,
+    "description": "A boy enters a spiritual world of powerful soul masters.",
+    "type": "anime",
+    "category": "banner"
+  },
+  {
+    "title": "Soul Land (Deadpool)",
+    "posterName": "deadpool",
+    "rating": 4.2,
+    "description": "A boy enters a spiritual world of powerful soul masters.",
+    "type": "anime",
+    "category": "banner"
+  }
+]
