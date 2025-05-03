@@ -77,7 +77,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             //  Add a dark mode toggle state
-            var isDarkMode by rememberSaveable { mutableStateOf(false) }
+            val context = LocalContext.current
+            var isDarkMode by rememberSaveable { mutableStateOf(LocalStorage.loadDarkMode(context)) }
+
+            LaunchedEffect(isDarkMode) {
+                LocalStorage.saveDarkMode(context, isDarkMode)
+            }
+
 
             //  Use your existing MovieNewTheme, just pass the darkTheme state
             MovieNewTheme(darkTheme = isDarkMode) {
