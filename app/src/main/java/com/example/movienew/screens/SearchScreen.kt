@@ -18,22 +18,23 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.movienew.data.DataSource
 import com.example.movienew.model.Movie
 import com.example.movienew.ui.theme.lightblack
+import com.example.movienew.viewmodel.MovieDataViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun SearchScreen(navController: NavController) {
-    var searchQuery by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    val viewModel: MovieDataViewModel = viewModel()
     val context = LocalContext.current
 
-    val allMovies = remember {
-        DataSource().loadMovies(context)
-    }
+    var searchQuery by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val allMovies = viewModel.remoteMovies
 
     val filteredMovies = allMovies.filter {
         searchQuery.isEmpty() || it.title.startsWith(searchQuery, ignoreCase = true)
