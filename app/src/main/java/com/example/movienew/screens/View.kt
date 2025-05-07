@@ -8,13 +8,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -31,9 +33,12 @@ import androidx.navigation.NavController
 import com.example.movienew.R
 import com.example.movienew.data.BookmarkManager
 import com.example.movienew.model.Movie
+import com.example.movienew.model.Review
+import com.example.movienew.storage.LocalStorage
 import com.example.movienew.ui.theme.Blue
-import com.example.movienew.ui.theme.beige
 import com.example.movienew.ui.theme.staryellow
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
 
 @Composable
 fun ViewScreen(
@@ -45,6 +50,7 @@ fun ViewScreen(
 ) {
     val context = LocalContext.current
     val backgroundColor = MaterialTheme.colorScheme.background
+    val firestore = FirebaseFirestore.getInstance()
 
     val movie = remember {
         Movie(
@@ -75,7 +81,6 @@ fun ViewScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -118,7 +123,7 @@ fun ViewScreen(
                 onClick = {
                     isBookmarked = !isBookmarked
                     if (isBookmarked) {
-                        BookmarkManager.addBookmark(context,movie)
+                        BookmarkManager.addBookmark(context, movie)
                     } else {
                         BookmarkManager.removeBookmark(movie)
                     }
@@ -136,186 +141,274 @@ fun ViewScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = movieTitle,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineLarge,
-                color = Blue,
-                textAlign = TextAlign.Start,
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "★",
-                    fontSize = 18.sp,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = staryellow
+                    text = movieTitle,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Blue,
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "$movieRating",
-                    fontSize = 18.sp,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "★", fontSize = 18.sp, color = staryellow)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "$movieRating", fontSize = 16.sp, color = Color.DarkGray)
+                }
             }
-        }
 
-        DescriptionSection(movieDescription)
-        ReviewSection()
-    }
-}
+            Spacer(modifier = Modifier.height(20.dp))
 
-@Composable
-fun DescriptionSection(movieDescription: String) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = beige),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             Text(
-                text = "Story",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, fontSize = 26.sp),
-                color = Color(0xFF1A237E),
-                modifier = Modifier.padding(bottom = 12.dp)
+                text = "Plot Overview",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF1A1A1A)
             )
+
+            Divider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                thickness = 1.dp,
+                color = Color.LightGray
+            )
+
             Text(
                 text = movieDescription,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 26.sp),
+                fontSize = 16.sp,
+                color = Color(0xFF444444),
                 textAlign = TextAlign.Justify,
-                color = Color(0xFF333333),
-                modifier = Modifier.padding(horizontal = 8.dp)
+                lineHeight = 24.sp
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            ReviewSection(movieTitle)
         }
     }
 }
 
 @Composable
-fun ReviewSection() {
-    var showDialog by remember { mutableStateOf(false) }
-    var reviewText by remember { mutableStateOf("") }
+fun ReviewSection(movieTitle: String) {
+    val context = LocalContext.current
+    val firestore = FirebaseFirestore.getInstance()
+    val username = LocalStorage.getUsername(context) ?: "Anonymous"
 
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = beige),
+    var showDialog by remember { mutableStateOf(false) }
+    var reviews by remember { mutableStateOf(listOf<Review>()) }
+
+    LaunchedEffect(Unit) {
+        firestore.collection("reviews")
+            .document(movieTitle)
+            .collection("reviews")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                reviews = snapshot.documents.mapNotNull { it.toObject<Review>() }
+            }
+    }
+
+    Text(
+        text = "Audience Reviews",
+        style = MaterialTheme.typography.headlineMedium.copy(
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        ),
+        color = Color(0xFF1A237E)
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(bottom = 20.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.elevatedCardElevation(6.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Write a Review",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, fontSize = 26.sp),
-                color = Color(0xFF1A237E),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Button(
-                onClick = { showDialog = true },
-                modifier = Modifier.padding(top = 16.dp),
-            ) {
-                Text(text = "Add Review")
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (reviews.isEmpty()) {
+                Text(
+                    text = "No reviews yet. Be the first to review!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                reviews.forEach { review ->
+                    Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                        // Profile icon and username
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Profile Icon",
+                                modifier = Modifier.size(28.dp),
+                                tint = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = review.username,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF37474F)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Rating stars
+                        Row {
+                            for (i in 1..5) {
+                                Icon(
+                                    imageVector = if (i <= review.rating.toInt()) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                    contentDescription = "Star $i",
+                                    tint = if (i <= review.rating.toInt()) Color(0xFFFFD700) else Color.Gray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Posted date
+                        Text(
+                            text = "Posted on ${review.date ?: "Unknown date"}",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Review text
+                        Text(
+                            text = review.text,
+                            fontSize = 14.sp,
+                            color = Color(0xFF555555),
+                            textAlign = TextAlign.Justify
+                        )
+                    }
+                }
             }
         }
+    }
+
+    // Write a Review button
+    Button(
+        onClick = { showDialog = true },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Blue)
+    ) {
+        Text("Write a Review")
     }
 
     if (showDialog) {
         AddReview(
-            reviewText = reviewText,
-            onReviewChange = { reviewText = it },
-            onDismiss = { showDialog = false }
+            movieTitle = movieTitle,
+            username = username,
+            onDismiss = { showDialog = false },
+            onSubmit = { newText, newRating ->
+                val newReview = Review(
+                    username = username,
+                    text = newText,
+                    rating = newRating,
+                    date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                )
+                firestore.collection("reviews")
+                    .document(movieTitle)
+                    .collection("reviews")
+                    .add(newReview)
+                reviews = reviews + newReview
+                showDialog = false
+            }
         )
     }
 }
 
+
+
 @Composable
 fun AddReview(
-    reviewText: String,
-    onReviewChange: (String) -> Unit,
-    onDismiss: () -> Unit
+    movieTitle: String,
+    username: String,
+    onDismiss: () -> Unit,
+    onSubmit: (String, Float) -> Unit
 ) {
+    var text by remember { mutableStateOf("") }
+    var rating by remember { mutableStateOf(0f) }
+
     Dialog(
         onDismissRequest = { onDismiss() },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = true)
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface),
-            shape = MaterialTheme.shapes.medium
+            shape = RoundedCornerShape(12.dp),
+            color = Color.White,
+            modifier = Modifier.padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Start
-            ) {
-                IconButton(onClick = { onDismiss() }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.back2),
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "Write a Review",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text("Review", style = MaterialTheme.typography.headlineMedium)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                var newReview by remember { mutableStateOf(reviewText) }
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
-                    value = newReview,
-                    onValueChange = { newReview = it },
-                    label = { Text("Your Review") },
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Your review...") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Rating",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    for (i in 1..5) {
+                        IconButton(onClick = { rating = i.toFloat() }) {
+                            Icon(
+                                imageVector = if (i <= rating.toInt()) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                contentDescription = "Star $i",
+                                tint = if (i <= rating.toInt()) Color(0xFFFFD700) else Color.Gray,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = {
-                        onReviewChange(newReview)
-                        onDismiss()
-                    },
+                Row(
+                    horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Save")
+                    TextButton(onClick = { onDismiss() }) {
+                        Text("Cancel")
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(onClick = {
+                        onSubmit(text, rating)
+                        onDismiss()
+                    }) {
+                        Text("Submit")
+                    }
                 }
             }
         }
     }
 }
+
