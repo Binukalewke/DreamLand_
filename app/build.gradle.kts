@@ -55,6 +55,7 @@ dependencies {
     implementation ("io.coil-kt:coil-compose:2.4.0") // added
     implementation ("com.google.code.gson:gson:2.10.1") //added
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")  // added
+    implementation ("com.google.firebase:firebase-firestore-ktx:24.9.0") // added
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.auth)
     implementation(libs.androidx.credentials)
