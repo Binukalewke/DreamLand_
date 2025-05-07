@@ -30,6 +30,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleTheme: () -> Unit) {
+    val context = LocalContext.current
+
     var editCredentials by remember { mutableStateOf(false) }
     var logoutMessage by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(false) }
@@ -149,6 +151,11 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                         UserSession.email = null
                         UserSession.password = null
                         FirebaseAuth.getInstance().signOut()
+
+                        // clear local credentials
+                        com.example.movienew.storage.LocalStorage.clearCredentials(context)
+                        com.example.movienew.storage.LocalStorage.setLoggedOut(context, true)
+
                         logoutMessage = false
                         navController.navigate("login") {
                             popUpTo("main") { inclusive = true }
@@ -166,6 +173,7 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
         )
     }
 }
+
 
 @Composable
 fun EditDialog(

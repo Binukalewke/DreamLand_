@@ -56,10 +56,7 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Image(
                 painter = painterResource(id = R.drawable.movie_logo),
                 contentDescription = "Login Logo",
@@ -108,7 +105,7 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                     isLoading = true
 
                     if (!isOnline(context)) {
-                        // No internet - Offline login
+                        // Offline login
                         val savedEmail = LocalStorage.getEmail(context)
                         val savedPassword = LocalStorage.getPassword(context)
 
@@ -120,6 +117,8 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                             isOfflineLogin = true
                             isLoading = false
 
+                            LocalStorage.setLoggedOut(context, false)
+
                             navController.navigate("main") {
                                 popUpTo("login") { inclusive = true }
                             }
@@ -127,11 +126,10 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                             errorMessage = "Offline login failed. Incorrect credentials."
                             isLoading = false
                         }
-
                         return@Button
                     }
 
-                    // Internet available - Try Firebase Login first
+                    // Firebase login
                     auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
                             isLoading = false
@@ -145,16 +143,15 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                                                 val username = document.getString("username") ?: "Unknown"
                                                 val emailFromDb = document.getString("email") ?: ""
 
-                                                //  Save session in UserSession
                                                 UserSession.username = username
                                                 UserSession.email = emailFromDb
                                                 UserSession.password = password
                                                 isOfflineLogin = false
 
-                                                //  Save credentials locally with username!
+                                                // Save locally
                                                 LocalStorage.saveCredentials(context, emailFromDb, password, username)
+                                                LocalStorage.setLoggedOut(context, false)
 
-                                                // Load bookmarks
                                                 CoroutineScope(Dispatchers.IO).launch {
                                                     BookmarkManager.loadBookmarksFromFirestore()
                                                 }
@@ -173,7 +170,6 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                                     errorMessage = "User ID not found."
                                 }
                             } else {
-                                // Firebase login failed, try offline login fallback
                                 val savedEmail = LocalStorage.getEmail(context)
                                 val savedPassword = LocalStorage.getPassword(context)
 
@@ -183,6 +179,9 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
                                     UserSession.password = password
                                     UserSession.username = LocalStorage.getUsername(context) ?: "Offline User"
                                     isOfflineLogin = true
+
+                                    LocalStorage.setLoggedOut(context, false)
+
                                     navController.navigate("main") {
                                         popUpTo("login") { inclusive = true }
                                     }
@@ -214,14 +213,9 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Text("Don't have an account?")
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Button(
                 onClick = { navController.navigate("signup") },
                 modifier = Modifier.fillMaxWidth()

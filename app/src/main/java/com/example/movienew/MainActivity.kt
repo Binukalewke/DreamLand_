@@ -155,12 +155,15 @@ class MainActivity : ComponentActivity() {
                 CircularProgressIndicator()
             }
         } else {
-            // ✅ After initialization
-            val startDestination = if (auth.currentUser != null || LocalStorage.isUserLoggedInLocally(context)) {
-                "main"
-            } else {
-                "signup"
+            //  After initialization
+            val startDestination = when {
+                auth.currentUser != null -> "main" // Firebase user still logged in
+                LocalStorage.isUserLoggedInLocally(context) && !LocalStorage.isLoggedOut(context) -> "main" // Offline session
+                LocalStorage.isLoggedOut(context) -> "login" // Explicit logout
+                else -> "signup" // First time user
             }
+
+
 
             NavHost(
                 navController = navController,

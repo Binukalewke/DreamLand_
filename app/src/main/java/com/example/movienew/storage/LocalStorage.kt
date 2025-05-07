@@ -9,6 +9,7 @@ object LocalStorage {
     private const val KEY_PASSWORD = "password"
     private const val KEY_USERNAME = "username"
     private const val KEY_DARK_MODE = "is_dark_mode"
+    private const val KEY_LOGGED_OUT = "logged_out"
 
     fun saveCredentials(context: Context, email: String, password: String, username: String) {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -19,6 +20,24 @@ object LocalStorage {
             apply()
         }
     }
+
+    fun clearCredentials(context: Context) {
+        val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+    }
+
+
+
+    fun setLoggedOut(context: Context, loggedOut: Boolean) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_LOGGED_OUT, loggedOut).apply()
+    }
+
+    fun isLoggedOut(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_LOGGED_OUT, false)
+    }
+
 
     fun getEmail(context: Context): String? {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
