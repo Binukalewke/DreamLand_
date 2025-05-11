@@ -165,7 +165,7 @@ fun ViewScreen(
                 text = "Plot Overview",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1A1A1A)
+                color = MaterialTheme.colorScheme.secondary
             )
 
             Divider(
@@ -214,7 +214,8 @@ fun ReviewSection(movieTitle: String) {
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         ),
-        color = Color(0xFF1A237E)
+        //color = Color(0xFF1A237E)
+        color = MaterialTheme.colorScheme.secondary
     )
 
     Spacer(modifier = Modifier.height(12.dp))
