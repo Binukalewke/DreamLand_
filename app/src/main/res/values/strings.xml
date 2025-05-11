@@ -58,6 +58,24 @@
     <string name="anime_world_of_Immortals">World of Immortals</string>
     <string name="anime_swallowed_star">Swallowed Star</string>
 
+    <!--HelpScreen-->
+
+    <string name="faq_heading">Frequently Asked Questions</string>
+
+    <string name="faq_1_q">I forgot my password. What should I do?</string>
+    <string name="faq_1_a">If you\'re online, use the \'Forgot Password option on the login screen. If you\'re offline, your locally stored password must be reset manually.</string>
+
+    <string name="faq_2_q">How can I update my profile?</string>
+    <string name="faq_2_a">Go to Profile &gt; Tap the pencil icon &gt; Edit your username, email, and password.</string>
+
+    <string name="faq_3_q">Can I use the app offline?</string>
+    <string name="faq_3_a">Yes, but only after logging in once. Bookmarks and login are stored locally.</string>
+
+    <string name="contact_heading">Contact Support</string>
+    <string name="contact_email">Email: support@movienew.com</string>
+    <string name="contact_phone">Phone: +94 77 123 4567</string>
+    <string name="contact_website">Website: www.movienew.com/support</string>
+
 
 
 
