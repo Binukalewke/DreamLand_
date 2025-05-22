@@ -1,6 +1,6 @@
 package com.example.movienew.screens
 
-import android.util.Log
+
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,7 +40,6 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
 
     LaunchedEffect(Unit) {
         val loaded = LocalStorage.loadProfileImage(context)
-        Log.d("ProfileScreen", "Loaded saved profile image URI: $loaded")
         imageUri = loaded
     }
 

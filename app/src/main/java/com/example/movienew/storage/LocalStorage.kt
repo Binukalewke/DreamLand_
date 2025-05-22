@@ -2,7 +2,7 @@ package com.example.movienew.storage
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
+
 
 object LocalStorage {
     private const val PREF_NAME = "user_credentials"

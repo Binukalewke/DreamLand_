@@ -46,12 +46,9 @@ fun ProfilePicture(
                 file.writeBytes(bytes)
 
                 val savedUri = Uri.fromFile(file).toString()
-                Log.d("ProfilePicture", "Gallery image saved: $savedUri")
 
                 onImageUriChange(savedUri)
                 LocalStorage.saveProfileImage(context, savedUri)
-            } else {
-                Log.e("ProfilePicture", "Failed to read gallery image bytes")
             }
         }
     }
@@ -65,11 +62,10 @@ fun ProfilePicture(
             outputStream.close()
 
             val savedUri = Uri.fromFile(file).toString()
-            Log.d("ProfilePicture", "Camera image saved: $savedUri")
 
             onImageUriChange(savedUri)
             LocalStorage.saveProfileImage(context, savedUri)
-        } ?: Log.e("ProfilePicture", "Camera returned null bitmap")
+        }
     }
 
     // UI
