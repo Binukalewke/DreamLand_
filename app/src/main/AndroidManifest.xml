@@ -2,15 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />  <!-- added allow the app to access the internet and fetch data from external sources (GitHub).
+    <uses-permission android:name="android.permission.INTERNET" />  <!-- added allow the app to access the internet and fetch data from external sources (GitHub)-->
 
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Camera access -->
+    <uses-permission android:name="android.permission.CAMERA"/>
 
+    <!-- External storage access -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-
-
-
-
--->
+    <!-- For Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
 
 
@@ -24,6 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Movienew"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

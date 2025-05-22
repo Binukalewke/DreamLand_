@@ -1,5 +1,6 @@
 package com.example.movienew.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,10 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.movienew.R
+import com.example.movienew.bottomnavigation.BottomNav
+import com.example.movienew.components.ProfilePicture
 import com.example.movienew.data.UserSession
 import com.example.movienew.ui.theme.Blue
 import com.example.movienew.ui.theme.errorLight
 import com.example.movienew.data.NetworkHelper
+import com.example.movienew.storage.LocalStorage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -32,127 +36,121 @@ import com.google.firebase.firestore.FirebaseFirestore
 fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleTheme: () -> Unit) {
     val context = LocalContext.current
 
+    var imageUri by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val loaded = LocalStorage.loadProfileImage(context)
+        Log.d("ProfileScreen", "Loaded saved profile image URI: $loaded")
+        imageUri = loaded
+    }
+
+
+
     var editCredentials by remember { mutableStateOf(false) }
     var logoutMessage by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Row(
+    BottomNav(currentTab = "Profile", navController = navController) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
-            Text(
-                text = "PROFILE",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Blue
-            )
-
-            IconButton(onClick = { editCredentials = true }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.edit),
-                    contentDescription = "Edit Profile",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(30.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "PROFILE",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Blue
                 )
+
+                IconButton(onClick = { editCredentials = true }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.edit),
+                        contentDescription = "Edit Profile",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ProfilePicture(
+                    imageUri = imageUri,
+                    onImageUriChange = { newUri -> imageUri = newUri }
+                )
+            }
+
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Text(
+                    text = UserSession.username ?: "Guest",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ProfileOption(R.drawable.help, "Help and Support") {
+                    navController.navigate("help")
+                }
+
+                ProfileOption(R.drawable.logout, "Logout") {
+                    logoutMessage = true
+                }
+
+                ProfileSwitch(R.drawable.notifications, "Notifications", notificationsEnabled) {
+                    notificationsEnabled = !notificationsEnabled
+                }
+
+                ProfileSwitch(R.drawable.darkmode, "Dark mode", isDarkMode) {
+                    onToggleTheme()
+                }
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.profile2),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray)
+
+
+
+        if (editCredentials) {
+            EditDialog(
+                onDismiss = { editCredentials = false },
+                onSaveSuccess = { editCredentials = false }
             )
         }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-        ) {
-            Text(
-                text = UserSession.username ?: "Guest",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ProfileOption(
-                icon = R.drawable.help,
-                title = "Help and Support",
-                onClick = { /* Add future navigation if needed */ }
-            )
-
-            ProfileOption(
-                icon = R.drawable.logout,
-                title = "Logout",
-                onClick = {
-                    logoutMessage = true
-                }
-            )
-
-            ProfileSwitch(
-                icon = R.drawable.notifications,
-                title = "Notifications",
-                isChecked = notificationsEnabled,
-                onToggle = { notificationsEnabled = !notificationsEnabled }
-            )
-
-            ProfileSwitch(
-                icon = R.drawable.darkmode,
-                title = "Dark mode",
-                isChecked = isDarkMode,
-                onToggle = onToggleTheme
-            )
-        }
-    }
-
-    if (editCredentials) {
-        EditDialog(
-            onDismiss = { editCredentials = false },
-            onSaveSuccess = { editCredentials = false }
-        )
-    }
-
-    if (logoutMessage) {
-        AlertDialog(
-            onDismissRequest = { logoutMessage = false },
-            title = { Text("Logout") },
-            text = { Text("Do you wish to logout?", color = errorLight) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
+        if (logoutMessage) {
+            AlertDialog(
+                onDismissRequest = { logoutMessage = false },
+                title = { Text("Logout") },
+                text = { Text("Do you wish to logout?", color = errorLight) },
+                confirmButton = {
+                    TextButton(onClick = {
                         UserSession.username = null
                         UserSession.email = null
                         UserSession.password = null
                         FirebaseAuth.getInstance().signOut()
-
-                        // clear local credentials
                         com.example.movienew.storage.LocalStorage.clearCredentials(context)
                         com.example.movienew.storage.LocalStorage.setLoggedOut(context, true)
 
@@ -160,19 +158,20 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                         navController.navigate("login") {
                             popUpTo("main") { inclusive = true }
                         }
+                    }) {
+                        Text("Yes")
                     }
-                ) {
-                    Text("Yes")
+                },
+                dismissButton = {
+                    TextButton(onClick = { logoutMessage = false }) {
+                        Text("No")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { logoutMessage = false }) {
-                    Text("No")
-                }
-            }
-        )
+            )
+        }
     }
 }
+
 
 
 @Composable

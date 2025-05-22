@@ -2,6 +2,7 @@ package com.example.movienew.storage
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 
 object LocalStorage {
     private const val PREF_NAME = "user_credentials"
@@ -10,6 +11,7 @@ object LocalStorage {
     private const val KEY_USERNAME = "username"
     private const val KEY_DARK_MODE = "is_dark_mode"
     private const val KEY_LOGGED_OUT = "logged_out"
+    private const val KEY_PROFILE_IMAGE = "profile_image"
 
     fun saveCredentials(context: Context, email: String, password: String, username: String) {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -23,7 +25,13 @@ object LocalStorage {
 
     fun clearCredentials(context: Context) {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit().clear().apply()
+        prefs.edit().apply {
+            remove(KEY_EMAIL)
+            remove(KEY_PASSWORD)
+            remove(KEY_USERNAME)
+            remove(KEY_LOGGED_OUT)
+            apply()
+        }
     }
 
 
@@ -71,4 +79,21 @@ object LocalStorage {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         return prefs.getBoolean(KEY_DARK_MODE, false) // false = Light mode by default
     }
+
+
+    fun saveProfileImage(context: Context, uri: String) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_PROFILE_IMAGE, uri).apply()
+    }
+
+    fun loadProfileImage(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val uri = prefs.getString(KEY_PROFILE_IMAGE, null)
+        return uri
+    }
+
+
+
+
+
 }
