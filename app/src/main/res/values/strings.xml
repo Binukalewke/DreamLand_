@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MovieNew</string>
+    <string name="app_name">Dream Land</string>
 
     <!-- Movie Titles -->
     <string name="movie_uglies">Uglies</string>
@@ -72,9 +72,9 @@
     <string name="faq_3_a">Yes, but only after logging in once. Bookmarks and login are stored locally.</string>
 
     <string name="contact_heading">Contact Support</string>
-    <string name="contact_email">Email: support@movienew.com</string>
-    <string name="contact_phone">Phone: +94 77 123 4567</string>
-    <string name="contact_website">Website: www.movienew.com/support</string>
+    <string name="contact_email">Email: support@DreamLand.com</string>
+    <string name="contact_phone">+94771234567</string>
+    <string name="contact_website">Website: www.DreamLand.com/support</string>
 
 
 
