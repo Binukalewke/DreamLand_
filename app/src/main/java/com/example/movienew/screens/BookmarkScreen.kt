@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.example.movienew.data.BookmarkManager
 import com.example.movienew.model.Movie
 import com.example.movienew.R
+import com.example.movienew.data.NetworkHelper
 import com.example.movienew.ui.theme.Blue
 import com.example.movienew.ui.theme.errorLight
 import com.example.movienew.ui.theme.lightblack
@@ -55,7 +56,7 @@ fun BookmarkScreen(navController: NavController) {
             if (bookmarkedMovies.isEmpty()) {
                 item {
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillParentMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -154,11 +155,15 @@ fun BookmarkMovieCard(
 
         IconButton(
             onClick = {
-                isJiggling = true
-                jiggleJob = coroutineScope.launch {
-                    delay(400)
-                    isJiggling = false
-                    showMessage = true
+                if (NetworkHelper.isOnline(context)) {
+                    isJiggling = true
+                    jiggleJob = coroutineScope.launch {
+                        delay(400)
+                        isJiggling = false
+                        showMessage = true
+                    }
+                } else {
+                    Toast.makeText(context, "You're offline. Cannot Remove Bookmark.", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
