@@ -12,6 +12,12 @@ object LocalStorage {
     private const val KEY_DARK_MODE = "is_dark_mode"
     private const val KEY_LOGGED_OUT = "logged_out"
     private const val KEY_PROFILE_IMAGE = "profile_image"
+    private const val KEY_SHOW_BATTERY = "show_battery"
+    private const val KEY_SHOW_AMBIENT_LIGHT_ALERT = "show_ambient_light_alert"
+
+
+
+
 
     fun saveCredentials(context: Context, email: String, password: String, username: String) {
         val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -91,6 +97,28 @@ object LocalStorage {
         val uri = prefs.getString(KEY_PROFILE_IMAGE, null)
         return uri
     }
+
+    fun saveShowBattery(context: Context, value: Boolean) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_SHOW_BATTERY, value).apply()
+    }
+    fun loadShowBattery(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_SHOW_BATTERY, true)
+    }
+
+
+    fun saveShowAmbientLightAlert(context: Context, value: Boolean) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_SHOW_AMBIENT_LIGHT_ALERT, value).apply()
+    }
+
+    fun loadShowAmbientLightAlert(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_SHOW_AMBIENT_LIGHT_ALERT, false)
+    }
+
+
 
 
 
