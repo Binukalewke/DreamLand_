@@ -60,6 +60,10 @@ dependencies {
     implementation ("androidx.activity:activity-compose:1.8.0") // Jetpack Activity Compose for result handling (camera/gallery
     implementation(libs.firebase.firestore.ktx) // added
 
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")  // API related
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")  // API related
+
+
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.auth)
     implementation(libs.androidx.credentials)
