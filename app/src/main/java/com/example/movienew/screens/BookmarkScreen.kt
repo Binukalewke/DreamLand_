@@ -1,6 +1,7 @@
 package com.example.movienew.screens
 
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -15,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.movienew.data.BookmarkManager
 import com.example.movienew.model.Movie
 import com.example.movienew.R
@@ -102,10 +105,10 @@ fun BookmarkMovieCard(
         label = ""
     )
 
-    // Dynamically get drawable ID from posterName
-    val resId = remember(movie.posterName) {
-        context.resources.getIdentifier(movie.posterName, "drawable", context.packageName)
-    }
+    //
+    val isUrl = movie.posterName.startsWith("/") || movie.posterName.startsWith("http")
+    val posterUrl = "https://image.tmdb.org/t/p/w500${movie.posterName}"
+
 
     Row(
         modifier = Modifier
@@ -114,18 +117,25 @@ fun BookmarkMovieCard(
             .padding(8.dp)
             .clickable {
                 navController.navigate(
-                    "movieDetails/${movie.title}/${movie.posterName}/${movie.rating}/${movie.description}"
+                    "movieDetails/${Uri.encode(movie.title)}/${Uri.encode(movie.posterName)}/${movie.rating}/${Uri.encode(movie.description)}"
                 )
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = resId),
-            contentDescription = null,
+            painter = if (isUrl)
+                rememberAsyncImagePainter(posterUrl)
+            else
+                painterResource(
+                    id = context.resources.getIdentifier(movie.posterName, "drawable", context.packageName)
+                ),
+            contentDescription = movie.title,
             modifier = Modifier
                 .size(100.dp)
-                .padding(end = 16.dp)
+                .padding(end = 16.dp),
+            contentScale = ContentScale.Crop
         )
+
 
         Column(
             modifier = Modifier.weight(1f)
@@ -146,7 +156,7 @@ fun BookmarkMovieCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = movie.rating.toString(),
+                    text = String.format("%.1f", movie.rating),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
