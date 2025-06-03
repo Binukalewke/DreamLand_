@@ -4,18 +4,28 @@ import android.content.*
 import android.os.BatteryManager
 import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.movienew.storage.LocalStorage
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 
@@ -28,12 +38,26 @@ fun GlobalBatteryAlert() {
     val context = LocalContext.current
     var showLowBattery by remember { mutableStateOf(false) }
 
+    // Pulse animation for battery icon
+    val infiniteTransition = rememberInfiniteTransition()
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Auto-hide after 5 seconds
     LaunchedEffect(showLowBattery) {
         if (showLowBattery) {
             delay(5000)
             showLowBattery = false
         }
     }
+
+    // Battery receiver logic
     DisposableEffect(BatteryAlertState.isEnabled.value) {
         if (!BatteryAlertState.isEnabled.value) return@DisposableEffect onDispose {}
 
@@ -56,41 +80,61 @@ fun GlobalBatteryAlert() {
         }
     }
 
+
     AnimatedVisibility(
         visible = showLowBattery,
-        enter = slideInVertically() + fadeIn(),
-        exit = slideOutVertically() + fadeOut()
+        enter = slideInVertically(initialOffsetY = { -100 }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -100 }) + fadeOut()
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 48.dp) // 👈 Moves entire banner down
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Surface(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                tonalElevation = 6.dp,
-                shadowElevation = 8.dp,
-                color = Color.Red,
-                shape = MaterialTheme.shapes.medium
+                    .wrapContentHeight()
+                    .shadow(14.dp, shape = RoundedCornerShape(20.dp))
+                    .background(
+                        color = Color(0xFFE53935),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(vertical = 14.dp, horizontal = 16.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
                 ) {
+                    Icon(
+                        imageVector = Icons.Filled.BatteryFull,
+                        contentDescription = "Battery Warning",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .scale(scale) // pulsing effect
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
                     Text(
-                        "Low Battery!",
+                        text = "Low Battery – Please charge now!",
                         color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            lineHeight = 22.sp
+                        )
                     )
                 }
             }
         }
     }
-
-
 }
+
+
+
+
+
 
 @Composable
 fun ProfileBatteryLevel(

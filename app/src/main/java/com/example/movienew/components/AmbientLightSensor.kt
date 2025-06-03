@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -17,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.movienew.storage.LocalStorage
 import kotlinx.coroutines.delay
 
@@ -33,12 +36,12 @@ fun GlobalAmbientAlert() {
     var lightLevel by remember { mutableStateOf(-1f) }
     var message by remember { mutableStateOf<String?>(null) }
 
-    // Reload toggle on composition
+    // Reload toggle
     LaunchedEffect(Unit) {
         showAmbient.value = LocalStorage.loadShowAmbientLightAlert(context)
     }
 
-    // Auto-hide message after 5 seconds
+    // Auto-hide after 5 seconds
     LaunchedEffect(message) {
         if (message != null) {
             delay(5000)
@@ -46,6 +49,7 @@ fun GlobalAmbientAlert() {
         }
     }
 
+    // Sensor setup
     DisposableEffect(showAmbient.value) {
         if (!showAmbient.value) return@DisposableEffect onDispose {}
 
@@ -57,10 +61,10 @@ fun GlobalAmbientAlert() {
                 lightLevel = event?.values?.get(0) ?: -1f
 
                 message = when (lightLevel) {
-                    in 0f..20f -> "Low light detected. Consider enabling dark mode."
-                    in 21f..100f -> "Dim environment. Lower brightness to reduce eye strain."
-                    in 301f..1000f -> "☀Bright room detected. Consider increasing brightness."
-                    in 1001f..Float.MAX_VALUE -> "🌞 Very bright light detected. Avoid screen glare."
+                    in 0f..20f -> "🌙 Low light detected. Dark mode is recommended."
+                    in 21f..100f -> "🌒 Dim light: Lower brightness for comfort."
+                    in 301f..1000f -> "☀ Bright light detected. Increase screen brightness."
+                    in 1001f..Float.MAX_VALUE -> "🌞 Very bright light! Avoid screen glare."
                     else -> null
                 }
             }
@@ -69,12 +73,10 @@ fun GlobalAmbientAlert() {
         }
 
         sensorManager.registerListener(listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
-
-        onDispose {
-            sensorManager.unregisterListener(listener)
-        }
+        onDispose { sensorManager.unregisterListener(listener) }
     }
 
+    // Styled banner
     AnimatedVisibility(
         visible = message != null,
         enter = fadeIn(),
@@ -83,16 +85,30 @@ fun GlobalAmbientAlert() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF424242))
-                .padding(12.dp),
-            contentAlignment = Alignment.Center
+                .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            Text(
-                text = message ?: "",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(
+                        color = Color(0xFF212121), // Deep dark gray
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(vertical = 14.dp, horizontal = 16.dp)
+            ) {
+                Text(
+                    text = message ?: "",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 22.sp
+                    ),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }
+
 
