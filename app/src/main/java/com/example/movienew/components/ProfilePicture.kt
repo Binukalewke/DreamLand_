@@ -1,9 +1,10 @@
 package com.example.movienew.components
 
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -21,9 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import com.example.movienew.R
 import com.example.movienew.storage.LocalStorage
+import com.example.movienew.data.NetworkHelper
 import java.io.File
 
 @Composable
@@ -44,9 +47,7 @@ fun ProfilePicture(
             if (bytes != null) {
                 val file = File(context.filesDir, "profile_image.jpg")
                 file.writeBytes(bytes)
-
                 val savedUri = Uri.fromFile(file).toString()
-
                 onImageUriChange(savedUri)
                 LocalStorage.saveProfileImage(context, savedUri)
             }
@@ -57,18 +58,25 @@ fun ProfilePicture(
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         bitmap?.let {
             val file = File(context.filesDir, "profile_image.jpg")
-            val outputStream = file.outputStream()
-            it.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            outputStream.close()
-
+            file.outputStream().use { out ->
+                it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            }
             val savedUri = Uri.fromFile(file).toString()
-
             onImageUriChange(savedUri)
             LocalStorage.saveProfileImage(context, savedUri)
         }
     }
 
-    // UI
+    // Permission Request
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(null)
+        } else {
+            Toast.makeText(context, "Camera permission is required", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Profile Picture UI
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val painter = if (!imageUri.isNullOrBlank()) {
             rememberAsyncImagePainter(model = imageUri)
@@ -82,11 +90,17 @@ fun ProfilePicture(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .clickable { showImagePickerDialog = true }
+                .clickable {
+                    if (NetworkHelper.isOnline(context)) {
+                        showImagePickerDialog = true
+                    } else {
+                        Toast.makeText(context, "You're offline. Cannot change profile picture.", Toast.LENGTH_SHORT).show()
+                    }
+                }
         )
     }
 
-    // Picker Dialog
+    // Image Source Picker Dialog
     if (showImagePickerDialog) {
         AlertDialog(
             onDismissRequest = { showImagePickerDialog = false },
@@ -94,16 +108,30 @@ fun ProfilePicture(
             text = { Text("Choose where to get your new profile picture from:") },
             confirmButton = {
                 TextButton(onClick = {
-                    showImagePickerDialog = false
-                    galleryLauncher.launch("image/*")
+                    if (NetworkHelper.isOnline(context)) {
+                        showImagePickerDialog = false
+                        galleryLauncher.launch("image/*")
+                    } else {
+                        Toast.makeText(context, "You're offline. Cannot change profile picture.", Toast.LENGTH_SHORT).show()
+                    }
                 }) {
                     Text("Gallery")
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
-                    showImagePickerDialog = false
-                    cameraLauncher.launch(null)
+                    if (NetworkHelper.isOnline(context)) {
+                        showImagePickerDialog = false
+                        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
+                            != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            permissionLauncher.launch(android.Manifest.permission.CAMERA)
+                        } else {
+                            cameraLauncher.launch(null)
+                        }
+                    } else {
+                        Toast.makeText(context, "You're offline. Cannot change profile picture.", Toast.LENGTH_SHORT).show()
+                    }
                 }) {
                     Text("Camera")
                 }
