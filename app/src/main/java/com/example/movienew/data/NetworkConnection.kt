@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
@@ -53,3 +54,37 @@ private fun isNetworkConnected(connectivityManager: ConnectivityManager): Boolea
     val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
     return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
+
+@Composable
+fun rememberUpdatedNetworkStatus(): Boolean {
+    val context = LocalContext.current
+    val isConnected = remember { mutableStateOf(NetworkHelper.isOnline(context)) }
+
+    DisposableEffect(Unit) {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                isConnected.value = true
+            }
+
+            override fun onLost(network: Network) {
+                isConnected.value = false
+            }
+        }
+
+        connectivityManager.registerDefaultNetworkCallback(callback)
+
+        onDispose {
+            connectivityManager.unregisterNetworkCallback(callback)
+        }
+    }
+
+    return isConnected.value
+}
+
+
+
+
+
+
+
