@@ -1,6 +1,7 @@
 package com.example.movienew.screens
 
 import android.content.res.Configuration
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.movienew.R
 import com.example.movienew.data.BookmarkManager
 import com.example.movienew.data.NetworkHelper
@@ -52,8 +54,12 @@ fun ViewScreen(
     navController: NavController
 ) {
     val context = LocalContext.current
-    val backgroundColor = MaterialTheme.colorScheme.background
     val firestore = FirebaseFirestore.getInstance()
+    val backgroundColor = MaterialTheme.colorScheme.background
+
+    // Determine if poster is a URL or local drawable
+    val isUrl = moviePoster.startsWith("/") || moviePoster.startsWith("http")
+    val posterUrl = "https://image.tmdb.org/t/p/w500$moviePoster"
 
     val movie = remember {
         Movie(
@@ -66,19 +72,15 @@ fun ViewScreen(
         )
     }
 
-    val posterResId = remember(moviePoster) {
-        context.resources.getIdentifier(moviePoster, "drawable", context.packageName)
-    }
-
-    var isBookmarked by remember {
-        mutableStateOf(BookmarkManager.getBookmarks().contains(movie))
-    }
-
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     val posterHeight = if (isPortrait) 500.dp else 1100.dp
     val gradientHeight = if (isPortrait) 500.dp else 1100.dp
     val gradientStartY = if (isPortrait) 700f else 900f
+
+    var isBookmarked by remember {
+        mutableStateOf(BookmarkManager.getBookmarks().contains(movie))
+    }
 
     Column(
         modifier = Modifier
@@ -88,7 +90,16 @@ fun ViewScreen(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Image(
-                painter = painterResource(posterResId),
+                painter = if (isUrl)
+                    rememberAsyncImagePainter(posterUrl)
+                else
+                    painterResource(
+                        id = context.resources.getIdentifier(
+                            moviePoster,
+                            "drawable",
+                            context.packageName
+                        )
+                    ),
                 contentDescription = "Movie Poster",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -158,7 +169,7 @@ fun ViewScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "★", fontSize = 18.sp, color = staryellow)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "$movieRating", fontSize = 16.sp, color = Color.DarkGray)
+                    Text(text = String.format("%.1f", movieRating), fontSize = 16.sp, color = Color.DarkGray)
                 }
             }
 
@@ -178,7 +189,7 @@ fun ViewScreen(
             )
 
             Text(
-                text = movieDescription,
+                text = Uri.decode(movieDescription),
                 fontSize = 16.sp,
                 color = Color(0xFF444444),
                 textAlign = TextAlign.Justify,
