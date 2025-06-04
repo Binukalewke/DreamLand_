@@ -12,41 +12,42 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
+private var hasShownInitialNetworkToast = false
 @Composable
 fun NetworkStatusListener() {
     val context = LocalContext.current
-
     val connectivityManager = remember {
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    //  1. Immediately check current connection when app starts
     LaunchedEffect(Unit) {
-        val isConnected = isNetworkConnected(connectivityManager)
-        Toast.makeText(context, if (isConnected) "Online" else "Offline", Toast.LENGTH_SHORT).show()
+        if (!hasShownInitialNetworkToast) {
+            val isConnected = isNetworkConnected(connectivityManager)
+            Toast.makeText(context, if (isConnected) "Online" else "Offline", Toast.LENGTH_SHORT).show()
+            hasShownInitialNetworkToast = true
+        }
     }
 
-    // 2. Then listen for network changes live
     DisposableEffect(Unit) {
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                super.onAvailable(network)
                 Toast.makeText(context, "Online", Toast.LENGTH_SHORT).show()
             }
 
             override fun onLost(network: Network) {
-                super.onLost(network)
                 Toast.makeText(context, "Offline", Toast.LENGTH_SHORT).show()
             }
         }
 
-        connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        connectivityManager.registerDefaultNetworkCallback(callback)
 
         onDispose {
-            connectivityManager.unregisterNetworkCallback(networkCallback)
+            connectivityManager.unregisterNetworkCallback(callback)
         }
     }
 }
+
+
 
 // Helper function to check current internet status
 private fun isNetworkConnected(connectivityManager: ConnectivityManager): Boolean {

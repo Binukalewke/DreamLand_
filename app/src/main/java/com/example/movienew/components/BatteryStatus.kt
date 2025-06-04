@@ -2,14 +2,8 @@ package com.example.movienew.components
 
 import android.content.*
 import android.os.BatteryManager
-import android.util.Log
 import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -28,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-
 object BatteryAlertState {
     var isEnabled = mutableStateOf(false)
 }
@@ -36,20 +30,11 @@ object BatteryAlertState {
 @Composable
 fun GlobalBatteryAlert() {
     val context = LocalContext.current
-    var showLowBattery by remember { mutableStateOf(false) }
 
-    // Pulse animation for battery icon
-    val infiniteTransition = rememberInfiniteTransition()
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
+    var showLowBattery by rememberSaveable { mutableStateOf(false) }
+    var hasShownInitialWarning by rememberSaveable { mutableStateOf(false) }
 
-    // Auto-hide after 5 seconds
+    // 🔁 Auto-hide alert after 5 seconds
     LaunchedEffect(showLowBattery) {
         if (showLowBattery) {
             delay(5000)
@@ -57,34 +42,52 @@ fun GlobalBatteryAlert() {
         }
     }
 
-    // Battery receiver logic
+    // Animated scale for battery icon
+    val scale by rememberInfiniteTransition().animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
     DisposableEffect(BatteryAlertState.isEnabled.value) {
         if (!BatteryAlertState.isEnabled.value) return@DisposableEffect onDispose {}
 
         val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) {
+            override fun onReceive(context: Context?, intent: Intent?) {
                 val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
                 val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
                 val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
 
-                Log.d("BatteryBroadcast", "Battery %: $percent")
-                showLowBattery = percent in 1..15
+                if (percent in 1..15 && !hasShownInitialWarning) {
+                    showLowBattery = true
+                    hasShownInitialWarning = true
+                }
             }
         }
 
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         context.registerReceiver(receiver, filter)
 
-        onDispose {
-            context.unregisterReceiver(receiver)
+        // One-time battery check
+        val initial = context.registerReceiver(null, filter)
+        val level = initial?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = initial?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
+        if (percent in 1..15 && !hasShownInitialWarning) {
+            showLowBattery = true
+            hasShownInitialWarning = true
         }
-    }
 
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     AnimatedVisibility(
         visible = showLowBattery,
-        enter = slideInVertically(initialOffsetY = { -100 }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { -100 }) + fadeOut()
+        enter = slideInVertically { -100 } + fadeIn(),
+        exit = slideOutVertically { -100 } + fadeOut()
     ) {
         Box(
             modifier = Modifier
@@ -94,46 +97,31 @@ fun GlobalBatteryAlert() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
                     .shadow(14.dp, shape = RoundedCornerShape(20.dp))
-                    .background(
-                        color = Color(0xFFE53935),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .padding(vertical = 14.dp, horizontal = 16.dp)
+                    .background(Color(0xFFE53935), shape = RoundedCornerShape(20.dp))
+                    .padding(16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Filled.BatteryFull,
+                        imageVector = Icons.Default.BatteryFull,
                         contentDescription = "Battery Warning",
                         tint = Color.White,
                         modifier = Modifier
                             .size(28.dp)
-                            .scale(scale) // pulsing effect
+                            .scale(scale)
                     )
-
                     Spacer(modifier = Modifier.width(12.dp))
-
                     Text(
-                        text = "Low Battery – Please charge now!",
+                        "Low Battery – Please charge now!",
                         color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            lineHeight = 22.sp
-                        )
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp
                     )
                 }
             }
         }
     }
 }
-
-
-
-
 
 
 @Composable
@@ -212,6 +200,12 @@ fun ProfileBatteryLevel(
         }
     }
 }
+
+
+
+
+
+
 
 
 

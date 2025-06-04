@@ -29,6 +29,10 @@ object AmbientLightState {
     var isEnabled by mutableStateOf(false)
 }
 
+// Prevent repeated message on rotation
+private val shownLightMessages = mutableSetOf<String>()
+
+
 @Composable
 fun GlobalAmbientAlert() {
     val context = LocalContext.current
@@ -60,12 +64,19 @@ fun GlobalAmbientAlert() {
             override fun onSensorChanged(event: SensorEvent?) {
                 lightLevel = event?.values?.get(0) ?: -1f
 
-                message = when (lightLevel) {
+                // New message based on light level
+                val newMessage = when (lightLevel) {
                     in 0f..20f -> "🌙 Low light detected. Dark mode is recommended."
                     in 21f..100f -> "🌒 Dim light: Lower brightness for comfort."
                     in 301f..1000f -> "☀ Bright light detected. Increase screen brightness."
                     in 1001f..Float.MAX_VALUE -> "🌞 Very bright light! Avoid screen glare."
                     else -> null
+                }
+
+                // ✅ Only show new messages once per app session
+                if (newMessage != null && newMessage !in shownLightMessages) {
+                    message = newMessage
+                    shownLightMessages.add(newMessage)
                 }
             }
 
@@ -75,6 +86,7 @@ fun GlobalAmbientAlert() {
         sensorManager.registerListener(listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
         onDispose { sensorManager.unregisterListener(listener) }
     }
+
 
     // Styled banner
     AnimatedVisibility(

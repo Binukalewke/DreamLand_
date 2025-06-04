@@ -29,6 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.movienew.components.BatteryAlertState
 import com.example.movienew.components.GlobalAmbientAlert
 import com.example.movienew.components.GlobalBatteryAlert
 import com.example.movienew.data.BookmarkManager
@@ -44,11 +45,17 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.example.movienew.screens.HomeScreen
 
+private var hasShownOfflineToast = false
+
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Enable Battery Alert globally
+        BatteryAlertState.isEnabled.value = LocalStorage.loadShowBattery(this)
+
         auth = FirebaseAuth.getInstance()
 
         setContent {
@@ -60,10 +67,7 @@ class MainActivity : ComponentActivity() {
             }
 
             MovieNewTheme(darkTheme = isDarkMode) {
-                // Wrap everything in a Box so GlobalBatteryAlert overlays the whole app
                 Box(modifier = Modifier.fillMaxSize()) {
-
-                    // Main app content
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
@@ -79,14 +83,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // This will float on top if battery is low
+
                     GlobalBatteryAlert()
                     GlobalAmbientAlert()
-
                 }
             }
         }
     }
+
 }
 
 
@@ -117,7 +121,10 @@ class MainActivity : ComponentActivity() {
                 UserSession.username = LocalStorage.getUsername(context) ?: ""
                 UserSession.email = LocalStorage.getEmail(context) ?: ""
                 UserSession.password = LocalStorage.getPassword(context) ?: ""
-                Toast.makeText(context, "Offline Mode", Toast.LENGTH_SHORT).show()
+                if (!hasShownOfflineToast) {
+                    Toast.makeText(context, "Offline Mode", Toast.LENGTH_SHORT).show()
+                    hasShownOfflineToast = true
+                }
             }
             isInitialized = true
         }
