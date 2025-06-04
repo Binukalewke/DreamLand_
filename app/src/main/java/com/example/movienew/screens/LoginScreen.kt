@@ -144,10 +144,16 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) else Text("Login")
         }
 
-        errorMessage?.let {
+        if (errorMessage != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+
+            LaunchedEffect(errorMessage) {
+                kotlinx.coroutines.delay(3000)
+                errorMessage = null
+            }
         }
+
 
         Spacer(modifier = Modifier.weight(1f))
         Text("Don't have an account?")
