@@ -36,6 +36,8 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.movienew.R
 import com.example.movienew.data.BookmarkManager
+import com.example.movienew.data.DataSource
+import com.example.movienew.data.GitHubJsonFetcher
 import com.example.movienew.data.NetworkHelper
 import com.example.movienew.model.Movie
 import com.example.movienew.model.Review
@@ -57,26 +59,44 @@ fun ViewScreen(
     val firestore = FirebaseFirestore.getInstance()
     val backgroundColor = MaterialTheme.colorScheme.background
 
-    // Determine if poster is a URL or local drawable
-    val isUrl = moviePoster.startsWith("/") || moviePoster.startsWith("http")
-    val posterUrl = "https://image.tmdb.org/t/p/w500$moviePoster"
-
-    val movie = remember {
-        Movie(
-            title = movieTitle,
-            posterName = moviePoster,
-            rating = movieRating,
-            description = movieDescription,
-            type = "",
-            category = ""
-        )
-    }
-
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     val posterHeight = if (isPortrait) 500.dp else 1100.dp
     val gradientHeight = if (isPortrait) 500.dp else 1100.dp
     val gradientStartY = if (isPortrait) 700f else 900f
+
+    var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+
+    // Fetch movie details from GitHub JSON if Online
+    LaunchedEffect(Unit) {
+        try {
+            val movies = if (NetworkHelper.isOnline(context)) {
+                GitHubJsonFetcher.fetchMoviesFromGitHub()
+            } else {
+                DataSource().loadMovies(context)  // Fetch movie details from Local JSON if Offline
+            }
+
+            selectedMovie = movies.find { it.title == movieTitle }
+
+            if (selectedMovie == null) {
+                Toast.makeText(context, "Movie not found", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Failed to load movie details", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    if (selectedMovie == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
+    val movie = selectedMovie!!
+    val isUrl = movie.posterName.startsWith("/") || movie.posterName.startsWith("http")
+    val posterUrl = "https://image.tmdb.org/t/p/w500${movie.posterName}"
 
     var isBookmarked by remember {
         mutableStateOf(BookmarkManager.getBookmarks().contains(movie))
@@ -95,7 +115,7 @@ fun ViewScreen(
                 else
                     painterResource(
                         id = context.resources.getIdentifier(
-                            moviePoster,
+                            movie.posterName,
                             "drawable",
                             context.packageName
                         )
@@ -160,7 +180,7 @@ fun ViewScreen(
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = movieTitle,
+                    text = movie.title,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = Blue,
@@ -169,7 +189,7 @@ fun ViewScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "★", fontSize = 18.sp, color = staryellow)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = String.format("%.1f", movieRating), fontSize = 16.sp, color = Color.DarkGray)
+                    Text(text = String.format("%.1f", movie.rating), fontSize = 16.sp, color = Color.DarkGray)
                 }
             }
 
@@ -189,7 +209,7 @@ fun ViewScreen(
             )
 
             Text(
-                text = Uri.decode(movieDescription),
+                text = Uri.decode(movie.description),
                 fontSize = 16.sp,
                 color = Color(0xFF444444),
                 textAlign = TextAlign.Justify,
@@ -198,10 +218,11 @@ fun ViewScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            ReviewSection(movieTitle)
+            ReviewSection(movie.title)
         }
     }
 }
+
 
 @Composable
 fun ReviewSection(movieTitle: String) {
