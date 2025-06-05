@@ -166,6 +166,17 @@ class MainActivity : ComponentActivity() {
                     navController = navController
                 )
             }
+
+            composable(
+                route = "add_review/{movieTitle}",
+                arguments = listOf(
+                    navArgument("movieTitle") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val movieTitle = backStackEntry.arguments?.getString("movieTitle") ?: ""
+                AddReviewScreen(navController = navController, movieTitle = movieTitle)
+            }
+
         }
     }
 

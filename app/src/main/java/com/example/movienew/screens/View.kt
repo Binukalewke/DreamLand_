@@ -218,14 +218,14 @@ fun ViewScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            ReviewSection(movie.title)
+            ReviewSection(movie.title,navController)
         }
     }
 }
 
 
 @Composable
-fun ReviewSection(movieTitle: String) {
+fun ReviewSection(movieTitle: String,navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val username = LocalStorage.getUsername(context) ?: "Anonymous"
@@ -331,7 +331,7 @@ fun ReviewSection(movieTitle: String) {
     Button(
         onClick = {
             if (NetworkHelper.isOnline(context)) {
-                showDialog = true
+                navController.navigate("add_review/${movieTitle}")
             } else {
                 Toast.makeText(context, "You're offline. Cannot add a review.", Toast.LENGTH_SHORT).show()
             }
@@ -342,114 +342,11 @@ fun ReviewSection(movieTitle: String) {
     ) {
         Text("Write a Review")
     }
-
-
-    if (showDialog) {
-        AddReview(
-            movieTitle = movieTitle,
-            username = username,
-            onDismiss = { showDialog = false },
-            onSubmit = { newText, newRating ->
-                val newReview = Review(
-                    username = username,
-                    text = newText,
-                    rating = newRating,
-                    date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                )
-                firestore.collection("reviews")
-                    .document(movieTitle)
-                    .collection("reviews")
-                    .add(newReview)
-                reviews = reviews + newReview
-                showDialog = false
-            }
-        )
-    }
+    Spacer(modifier = Modifier.height(20.dp))
 }
 
 
-@Composable
-fun AddReview(
-    movieTitle: String,
-    username: String,
-    onDismiss: () -> Unit,
-    onSubmit: (String, Float) -> Unit
-) {
-    var text by rememberSaveable { mutableStateOf("") }
-    var rating by rememberSaveable { mutableStateOf(0f) }
-    val context = LocalContext.current
 
-    Dialog(
-        onDismissRequest = { onDismiss() },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(0.dp),
-            color = MaterialTheme.colorScheme.background,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text("Write a Review", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Your review...") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text("Rating", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 24.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    for (i in 1..5) {
-                        IconButton(onClick = { rating = i.toFloat() }) {
-                            Icon(
-                                imageVector = if (i <= rating.toInt()) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = null,
-                                tint = if (i <= rating.toInt()) Color(0xFFFFD700) else Color.Gray,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextButton(onClick = { onDismiss() }) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Button(onClick = {
-                        if (text.isBlank()) {
-                            Toast.makeText(context, "Please write a review", Toast.LENGTH_SHORT).show()
-                        } else {
-                            onSubmit(text, rating)
-                            onDismiss()
-                        }
-                    }) {
-                        Text("Submit")
-                    }
-                }
-            }
-        }
-    }
-}
 
 
 
