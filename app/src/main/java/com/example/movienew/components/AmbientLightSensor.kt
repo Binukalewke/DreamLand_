@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,29 +22,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.movienew.storage.LocalStorage
 import kotlinx.coroutines.delay
-
 
 object AmbientLightState {
     var isEnabled by mutableStateOf(false)
+    var lastZoneShown: Int? = null
 }
-
-// Prevent repeated message on rotation
-private val shownLightMessages = mutableSetOf<String>()
-
 
 @Composable
 fun GlobalAmbientAlert() {
     val context = LocalContext.current
-    val showAmbient = remember { mutableStateOf(LocalStorage.loadShowAmbientLightAlert(context)) }
-    var lightLevel by remember { mutableStateOf(-1f) }
-    var message by remember { mutableStateOf<String?>(null) }
-
-    // Reload toggle
-    LaunchedEffect(Unit) {
-        showAmbient.value = LocalStorage.loadShowAmbientLightAlert(context)
-    }
+    var message by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentZone by rememberSaveable { mutableStateOf<Int?>(null) }
 
     // Auto-hide after 5 seconds
     LaunchedEffect(message) {
@@ -53,30 +43,35 @@ fun GlobalAmbientAlert() {
         }
     }
 
-    // Sensor setup
-    DisposableEffect(showAmbient.value) {
-        if (!showAmbient.value) return@DisposableEffect onDispose {}
+    // Sensor logic
+    DisposableEffect(AmbientLightState.isEnabled) {
+        if (!AmbientLightState.isEnabled) return@DisposableEffect onDispose {}
 
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                lightLevel = event?.values?.get(0) ?: -1f
+                val lux = event?.values?.get(0) ?: return
 
-                // New message based on light level
-                val newMessage = when (lightLevel) {
-                    in 0f..20f -> "🌙 Low light detected. Dark mode is recommended."
-                    in 21f..100f -> "🌒 Dim light: Lower brightness for comfort."
-                    in 301f..1000f -> "☀ Bright light detected. Increase screen brightness."
-                    in 1001f..Float.MAX_VALUE -> "🌞 Very bright light! Avoid screen glare."
+                val zone = when (lux) {
+                    in 0f..20f -> 1
+                    in 21f..100f -> 2
+                    in 301f..1000f -> 3
+                    in 1001f..Float.MAX_VALUE -> 4
                     else -> null
                 }
 
-                // ✅ Only show new messages once per app session
-                if (newMessage != null && newMessage !in shownLightMessages) {
-                    message = newMessage
-                    shownLightMessages.add(newMessage)
+                if (zone != null && zone != currentZone) {
+                    currentZone = zone
+                    AmbientLightState.lastZoneShown = zone
+                    message = when (zone) {
+                        1 -> "\uD83C\uDF19 Low light detected. Dark mode is recommended."
+                        2 -> "\uD83C\uDF12 Dim light: Lower brightness for comfort."
+                        3 -> "\u2600 Bright light detected. Increase screen brightness."
+                        4 -> "\uD83C\uDF1E Very bright light! Avoid screen glare."
+                        else -> null
+                    }
                 }
             }
 
@@ -87,13 +82,8 @@ fun GlobalAmbientAlert() {
         onDispose { sensorManager.unregisterListener(listener) }
     }
 
-
-    // Styled banner
-    AnimatedVisibility(
-        visible = message != null,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
+    // Alert message UI
+    AnimatedVisibility(visible = message != null, enter = fadeIn(), exit = fadeOut()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -102,12 +92,8 @@ fun GlobalAmbientAlert() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(
-                        color = Color(0xFF212121), // Deep dark gray
-                        shape = RoundedCornerShape(20.dp)
-                    )
-                    .padding(vertical = 14.dp, horizontal = 16.dp)
+                    .background(Color(0xFF212121), RoundedCornerShape(20.dp))
+                    .padding(16.dp)
             ) {
                 Text(
                     text = message ?: "",
@@ -122,5 +108,3 @@ fun GlobalAmbientAlert() {
         }
     }
 }
-
-

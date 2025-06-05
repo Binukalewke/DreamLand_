@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -29,6 +30,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.movienew.components.AmbientLightState
 import com.example.movienew.components.BatteryAlertState
 import com.example.movienew.components.GlobalAmbientAlert
 import com.example.movienew.components.GlobalBatteryAlert
@@ -53,14 +55,25 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable Battery Alert globally
-        BatteryAlertState.isEnabled.value = LocalStorage.loadShowBattery(this)
+
+
+
 
         auth = FirebaseAuth.getInstance()
 
         setContent {
+            // Enable Battery Alert globally
+            val email = LocalStorage.getEmail(this) ?: "default"
+          //  BatteryAlertState.isEnabled.value = LocalStorage.loadShowBattery(this, email)
+            // AmbientLightState.isEnabled = LocalStorage.loadShowAmbient(this, email)
             val context = LocalContext.current
             var isDarkMode by rememberSaveable { mutableStateOf(LocalStorage.loadDarkMode(context)) }
+
+
+            LaunchedEffect(Unit) {
+                BatteryAlertState.isEnabled.value = LocalStorage.loadShowBattery(context, email)
+                AmbientLightState.isEnabled = LocalStorage.loadShowAmbient(context, email)
+            }
 
             LaunchedEffect(isDarkMode) {
                 LocalStorage.saveDarkMode(context, isDarkMode)
@@ -82,6 +95,8 @@ class MainActivity : ComponentActivity() {
                             toggleDarkMode = { isDarkMode = !isDarkMode }
                         )
                     }
+
+
 
 
                     GlobalBatteryAlert()

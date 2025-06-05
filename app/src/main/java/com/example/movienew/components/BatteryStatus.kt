@@ -25,16 +25,17 @@ import kotlinx.coroutines.delay
 
 object BatteryAlertState {
     var isEnabled = mutableStateOf(false)
+    var hasShownLowBattery = false // persists across configuration changes
 }
+
 
 @Composable
 fun GlobalBatteryAlert() {
     val context = LocalContext.current
 
-    var showLowBattery by rememberSaveable { mutableStateOf(false) }
-    var hasShownInitialWarning by rememberSaveable { mutableStateOf(false) }
+    var showLowBattery by remember { mutableStateOf(false) }
 
-    // 🔁 Auto-hide alert after 5 seconds
+    // Auto-hide alert after 5 seconds
     LaunchedEffect(showLowBattery) {
         if (showLowBattery) {
             delay(5000)
@@ -42,7 +43,7 @@ fun GlobalBatteryAlert() {
         }
     }
 
-    // Animated scale for battery icon
+    // Battery icon animation
     val scale by rememberInfiniteTransition().animateFloat(
         initialValue = 1f,
         targetValue = 1.15f,
@@ -61,9 +62,12 @@ fun GlobalBatteryAlert() {
                 val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
                 val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
 
-                if (percent in 1..15 && !hasShownInitialWarning) {
+                // Trigger alert logic
+                if (percent in 1..15 && !BatteryAlertState.hasShownLowBattery) {
                     showLowBattery = true
-                    hasShownInitialWarning = true
+                    BatteryAlertState.hasShownLowBattery = true
+                } else if (percent > 15 && BatteryAlertState.hasShownLowBattery) {
+                    BatteryAlertState.hasShownLowBattery = false
                 }
             }
         }
@@ -71,14 +75,15 @@ fun GlobalBatteryAlert() {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         context.registerReceiver(receiver, filter)
 
-        // One-time battery check
+        // One-time check at composable startup
         val initial = context.registerReceiver(null, filter)
         val level = initial?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
         val scale = initial?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
         val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
-        if (percent in 1..15 && !hasShownInitialWarning) {
+
+        if (percent in 1..15 && !BatteryAlertState.hasShownLowBattery) {
             showLowBattery = true
-            hasShownInitialWarning = true
+            BatteryAlertState.hasShownLowBattery = true
         }
 
         onDispose { context.unregisterReceiver(receiver) }

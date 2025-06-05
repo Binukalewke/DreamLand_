@@ -98,28 +98,25 @@ object LocalStorage {
         return uri
     }
 
-    fun saveShowBattery(context: Context, value: Boolean) {
+    fun saveShowBattery(context: Context, email: String, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_SHOW_BATTERY, value).apply()
-    }
-    fun loadShowBattery(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_SHOW_BATTERY, true)
+        prefs.edit().putBoolean("show_battery_$email", enabled).apply()
     }
 
-
-    fun saveShowAmbientLightAlert(context: Context, value: Boolean) {
+    fun loadShowBattery(context: Context, email: String): Boolean {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_SHOW_AMBIENT_LIGHT_ALERT, value).apply()
+        return prefs.getBoolean("show_battery_$email", false)
     }
 
-    fun loadShowAmbientLightAlert(context: Context): Boolean {
+    fun saveShowAmbient(context: Context, email: String, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_SHOW_AMBIENT_LIGHT_ALERT, false)
+        prefs.edit().putBoolean("show_ambient_$email", enabled).apply()
     }
 
-
-
+    fun loadShowAmbient(context: Context, email: String): Boolean {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean("show_ambient_$email", false)
+    }
 
 
 

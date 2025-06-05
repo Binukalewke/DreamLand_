@@ -12,30 +12,41 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
-private var hasShownInitialNetworkToast = false
+private var hasShownInitialToast = false
+private var currentStatus: Boolean? = null // Track current status to avoid duplicate toasts
+
 @Composable
 fun NetworkStatusListener() {
     val context = LocalContext.current
+
     val connectivityManager = remember {
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
+    // Show initial toast only once on first app load
     LaunchedEffect(Unit) {
-        if (!hasShownInitialNetworkToast) {
+        if (!hasShownInitialToast) {
             val isConnected = isNetworkConnected(connectivityManager)
+            currentStatus = isConnected
             Toast.makeText(context, if (isConnected) "Online" else "Offline", Toast.LENGTH_SHORT).show()
-            hasShownInitialNetworkToast = true
+            hasShownInitialToast = true
         }
     }
 
     DisposableEffect(Unit) {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                Toast.makeText(context, "Online", Toast.LENGTH_SHORT).show()
+                if (currentStatus != true) {
+                    currentStatus = true
+                    Toast.makeText(context, "Online", Toast.LENGTH_SHORT).show()
+                }
             }
 
             override fun onLost(network: Network) {
-                Toast.makeText(context, "Offline", Toast.LENGTH_SHORT).show()
+                if (currentStatus != false) {
+                    currentStatus = false
+                    Toast.makeText(context, "Offline", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -47,9 +58,7 @@ fun NetworkStatusListener() {
     }
 }
 
-
-
-// Helper function to check current internet status
+// Check current connection
 private fun isNetworkConnected(connectivityManager: ConnectivityManager): Boolean {
     val network = connectivityManager.activeNetwork ?: return false
     val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
