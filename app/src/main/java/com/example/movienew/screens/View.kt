@@ -69,22 +69,17 @@ fun ViewScreen(
 
     // Fetch movie details from GitHub JSON if Online
     LaunchedEffect(Unit) {
-        try {
-            val movies = if (NetworkHelper.isOnline(context)) {
-                GitHubJsonFetcher.fetchMoviesFromGitHub()
-            } else {
-                DataSource().loadMovies(context)  // Fetch movie details from Local JSON if Offline
-            }
-
-            selectedMovie = movies.find { it.title == movieTitle }
-
-            if (selectedMovie == null) {
-                Toast.makeText(context, "Movie not found", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Toast.makeText(context, "Failed to load movie details", Toast.LENGTH_SHORT).show()
-        }
+        selectedMovie = Movie(
+            title = movieTitle,
+            posterName = moviePoster,
+            rating = movieRating,
+            description = Uri.decode(movieDescription),
+            type = "movie",
+            category = "popular"
+        )
     }
+
+
 
     if (selectedMovie == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
