@@ -4,12 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />  <!-- added allow the app to access the internet and fetch data from external sources (GitHub)-->
 
-
-
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
-
-
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- Camera access -->

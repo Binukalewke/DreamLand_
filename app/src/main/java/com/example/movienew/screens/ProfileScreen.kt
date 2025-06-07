@@ -27,6 +27,7 @@ import com.example.movienew.components.BatteryAlertState
 import com.example.movienew.components.ProfileBatteryLevel
 import com.example.movienew.components.ProfilePicture
 import com.example.movienew.data.UserSession
+import com.example.movienew.data.UserSession.email
 import com.example.movienew.ui.theme.Blue
 import com.example.movienew.ui.theme.errorLight
 import com.example.movienew.storage.LocalStorage
@@ -36,36 +37,25 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleTheme: () -> Unit) {
     val context = LocalContext.current
-
+    val email = LocalStorage.getEmail(context) ?: "default"
     var imageUri by remember { mutableStateOf<String?>(null) }
 
-    var batteryVisible by remember { mutableStateOf(LocalStorage.loadShowBattery(context)) }
-    LaunchedEffect(Unit) {
-        batteryVisible = LocalStorage.loadShowBattery(context)
-        BatteryAlertState.isEnabled.value = batteryVisible
-    }
-
-
-
-    var ambientVisible by remember { mutableStateOf(LocalStorage.loadShowAmbientLightAlert(context)) }
-    LaunchedEffect(Unit) {
-        ambientVisible = LocalStorage.loadShowAmbientLightAlert(context)
-        AmbientLightState.isEnabled = ambientVisible
-    }
-
-
-
-
-
-    LaunchedEffect(Unit) {
-        val loaded = LocalStorage.loadProfileImage(context)
-        imageUri = loaded
-    }
-
-
-
+    // State for switches
+    var batteryVisible by remember { mutableStateOf(false) }
+    var ambientVisible by remember { mutableStateOf(false) }
     var logoutMessage by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(false) }
+
+    // Load states on screen entry
+    LaunchedEffect(Unit) {
+        batteryVisible = LocalStorage.loadShowBattery(context, email)
+        BatteryAlertState.isEnabled.value = batteryVisible
+
+        ambientVisible = LocalStorage.loadShowAmbient(context, email)
+        AmbientLightState.isEnabled = ambientVisible
+
+        imageUri = LocalStorage.loadProfileImage(context)
+    }
 
     BottomNav(currentTab = "Profile", navController = navController) { padding ->
         Column(
@@ -88,7 +78,6 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                     fontWeight = FontWeight.Bold,
                     color = Blue
                 )
-
                 IconButton(onClick = {
                     navController.navigate("edit_profile")
                 }) {
@@ -99,8 +88,6 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                         modifier = Modifier.size(30.dp)
                     )
                 }
-
-
             }
 
             Box(
@@ -114,7 +101,6 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                     onImageUriChange = { newUri -> imageUri = newUri }
                 )
             }
-
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -150,26 +136,24 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                 }
 
                 if (batteryVisible) {
-                    ProfileBatteryLevel(
-                        batteryVisible = batteryVisible,
-                        onToggle = {
-                            batteryVisible = it
-                            LocalStorage.saveShowBattery(context, it)
-                            BatteryAlertState.isEnabled.value = it
-                        }
-                    )
+
+                    ProfileBatteryLevel(batteryVisible) {
+                        batteryVisible = it
+                        LocalStorage.saveShowBattery(context, email, it)
+                        BatteryAlertState.isEnabled.value = it
+                    }
                 } else {
+
                     ProfileSwitch(
                         icon = Icons.Filled.BatteryFull,
-                        title = "Show Battery",
+                        title = "Show Battery Alert",
                         isChecked = batteryVisible
                     ) {
                         batteryVisible = true
-                        LocalStorage.saveShowBattery(context, true)
+                        LocalStorage.saveShowBattery(context, email, true)
                         BatteryAlertState.isEnabled.value = true
                     }
                 }
-
 
 
                 ProfileSwitch(
@@ -178,18 +162,11 @@ fun ProfileScreen(navController: NavController, isDarkMode: Boolean, onToggleThe
                     isChecked = ambientVisible
                 ) {
                     ambientVisible = !ambientVisible
-                    LocalStorage.saveShowAmbientLightAlert(context, ambientVisible)
+                    LocalStorage.saveShowAmbient(context, email, ambientVisible)
                     AmbientLightState.isEnabled = ambientVisible
                 }
-
-
-
-
-
-
             }
         }
-
 
         if (logoutMessage) {
             AlertDialog(

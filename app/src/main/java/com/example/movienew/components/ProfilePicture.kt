@@ -1,9 +1,11 @@
 package com.example.movienew.components
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,11 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import com.example.movienew.R
-import com.example.movienew.storage.LocalStorage
 import com.example.movienew.data.NetworkHelper
+import com.example.movienew.storage.LocalStorage
+import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 
 @Composable
@@ -37,7 +41,27 @@ fun ProfilePicture(
     val context = LocalContext.current
     var showImagePickerDialog by remember { mutableStateOf(false) }
 
-    // Gallery Picker
+    val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: "default"
+    val profileFile = File(context.filesDir, "${currentUserUid}_profile.jpg")
+
+    var actualUri by remember { mutableStateOf<String?>(null) }
+
+    // Load once on composition
+    LaunchedEffect(currentUserUid) {
+        if (profileFile.exists()) {
+            actualUri = Uri.fromFile(profileFile).toString()
+        } else {
+            actualUri = null
+        }
+    }
+
+    val navigateToAppSettings = {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri = Uri.fromParts("package", context.packageName, null)
+        intent.data = uri
+        context.startActivity(intent)
+    }
+
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             val inputStream = context.contentResolver.openInputStream(it)
@@ -45,41 +69,68 @@ fun ProfilePicture(
             inputStream?.close()
 
             if (bytes != null) {
-                val file = File(context.filesDir, "profile_image.jpg")
-                file.writeBytes(bytes)
-                val savedUri = Uri.fromFile(file).toString()
+                profileFile.writeBytes(bytes)
+                val savedUri = Uri.fromFile(profileFile).toString()
+                actualUri = savedUri
                 onImageUriChange(savedUri)
                 LocalStorage.saveProfileImage(context, savedUri)
             }
         }
     }
 
-    // Camera Capture
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         bitmap?.let {
-            val file = File(context.filesDir, "profile_image.jpg")
-            file.outputStream().use { out ->
+            profileFile.outputStream().use { out ->
                 it.compress(Bitmap.CompressFormat.JPEG, 100, out)
             }
-            val savedUri = Uri.fromFile(file).toString()
+            val savedUri = Uri.fromFile(profileFile).toString()
+            actualUri = savedUri
             onImageUriChange(savedUri)
             LocalStorage.saveProfileImage(context, savedUri)
         }
     }
 
-    // Permission Request
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
             cameraLauncher.launch(null)
         } else {
-            Toast.makeText(context, "Camera permission is required", Toast.LENGTH_SHORT).show()
+            val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
+                context as android.app.Activity,
+                android.Manifest.permission.CAMERA
+            )
+            if (permanentlyDenied) {
+                Toast.makeText(context, "Camera permission permanently denied. Please enable it from settings.", Toast.LENGTH_LONG).show()
+                navigateToAppSettings()
+            } else {
+                Toast.makeText(context, "Camera permission is required", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    // Profile Picture UI
+    val galleryPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        else android.Manifest.permission.READ_EXTERNAL_STORAGE
+
+        if (isGranted) {
+            galleryLauncher.launch("image/*")
+        } else {
+            val permanentlyDenied = !ActivityCompat.shouldShowRequestPermissionRationale(
+                context as android.app.Activity,
+                permission
+            )
+            if (permanentlyDenied) {
+                Toast.makeText(context, "Gallery permission permanently denied. Please enable it from settings.", Toast.LENGTH_LONG).show()
+                navigateToAppSettings()
+            } else {
+                Toast.makeText(context, "Gallery permission is required", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val painter = if (!imageUri.isNullOrBlank()) {
-            rememberAsyncImagePainter(model = imageUri)
+        val painter = if (!actualUri.isNullOrBlank()) {
+            rememberAsyncImagePainter(model = actualUri)
         } else {
             painterResource(id = R.drawable.profile2)
         }
@@ -100,7 +151,6 @@ fun ProfilePicture(
         )
     }
 
-    // Image Source Picker Dialog
     if (showImagePickerDialog) {
         AlertDialog(
             onDismissRequest = { showImagePickerDialog = false },
@@ -108,11 +158,15 @@ fun ProfilePicture(
             text = { Text("Choose where to get your new profile picture from:") },
             confirmButton = {
                 TextButton(onClick = {
-                    if (NetworkHelper.isOnline(context)) {
-                        showImagePickerDialog = false
-                        galleryLauncher.launch("image/*")
+                    showImagePickerDialog = false
+                    val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
+                        android.Manifest.permission.READ_MEDIA_IMAGES
+                    else android.Manifest.permission.READ_EXTERNAL_STORAGE
+
+                    if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                        galleryPermissionLauncher.launch(permission)
                     } else {
-                        Toast.makeText(context, "You're offline. Cannot change profile picture.", Toast.LENGTH_SHORT).show()
+                        galleryLauncher.launch("image/*")
                     }
                 }) {
                     Text("Gallery")
@@ -120,17 +174,13 @@ fun ProfilePicture(
             },
             dismissButton = {
                 TextButton(onClick = {
-                    if (NetworkHelper.isOnline(context)) {
-                        showImagePickerDialog = false
-                        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
-                            != PackageManager.PERMISSION_GRANTED
-                        ) {
-                            permissionLauncher.launch(android.Manifest.permission.CAMERA)
-                        } else {
-                            cameraLauncher.launch(null)
-                        }
+                    showImagePickerDialog = false
+                    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
+                        != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                     } else {
-                        Toast.makeText(context, "You're offline. Cannot change profile picture.", Toast.LENGTH_SHORT).show()
+                        cameraLauncher.launch(null)
                     }
                 }) {
                     Text("Camera")
