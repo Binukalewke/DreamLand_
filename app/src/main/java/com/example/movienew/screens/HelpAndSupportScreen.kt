@@ -104,7 +104,8 @@ fun HelpAndSupportScreen(navController: NavController) {
 
         ContactItem(icon = Icons.Default.Email, text = stringResource(R.string.contact_email))
         ContactItem(icon = Icons.Default.Phone, text = stringResource(R.string.contact_phone))
-        ContactItem(icon = Icons.Default.Language, text = stringResource(R.string.contact_website))
+        ContactItem(icon = Icons.Default.Language, text = "Website: www.DreamLand.com/support")
+
     }
 }
 
@@ -169,11 +170,11 @@ fun ContactItem(icon: ImageVector, text: String) {
                     }
 
                     Icons.Default.Language -> {
-                        val webIntent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse(text)
-                        }
+                        val url = "https://binukalewke.github.io/DreamLand_Website/"
+                        val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                         context.startActivity(webIntent)
                     }
+
                 }
             }
     ) {
