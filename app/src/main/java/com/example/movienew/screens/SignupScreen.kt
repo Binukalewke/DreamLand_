@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.movienew.R
 import com.example.movienew.storage.LocalStorage
+import com.example.movienew.data.NetworkHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -41,10 +42,7 @@ fun SignUpScreen(navController: NavController, auth: FirebaseAuth) {
     var showConfirmPassword by rememberSaveable { mutableStateOf(false) }
     var navigateToLogin by remember { mutableStateOf(false) }
 
-
-
     val firestore = FirebaseFirestore.getInstance()
-
 
     Column(
         modifier = Modifier
@@ -122,10 +120,11 @@ fun SignUpScreen(navController: NavController, auth: FirebaseAuth) {
             }
         }
 
-
         Button(
             onClick = {
-                if (username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                if (!NetworkHelper.isOnline(context)) {
+                    errorMessage = "Network error. Please connect to the internet."
+                } else if (username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
                     errorMessage = "All fields are required."
                 } else if (password != confirmPassword) {
                     errorMessage = "Passwords do not match."
@@ -229,5 +228,4 @@ fun SignUpScreen(navController: NavController, auth: FirebaseAuth) {
             }
         }
     }
-
 }
