@@ -1,6 +1,7 @@
 package com.example.movienew.screens
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.movienew.api.TmdbViewModel
 import com.example.movienew.model.Movie
 import com.example.movienew.ui.theme.lightblack
 import com.example.movienew.viewmodel.MovieDataViewModel
@@ -29,13 +32,27 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SearchScreen(navController: NavController) {
-    val viewModel: MovieDataViewModel = viewModel()
+    val localViewModel: MovieDataViewModel = viewModel()
+    val apiViewModel: TmdbViewModel = viewModel()
     val context = LocalContext.current
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    val allMovies = viewModel.remoteMovies
+    // Combine GitHub JSON + TMDb API movies
+    val localMovies = localViewModel.remoteMovies
+    val apiMovies = apiViewModel.movies.map {
+        Movie(
+            title = it.title,
+            posterName = it.poster_path ?: "",
+            rating = it.vote_average,
+            description = it.overview,
+            type = "movie",
+            category = "popular"
+        )
+    }
+
+    val allMovies = localMovies + apiMovies
     val filteredMovies = allMovies.filter {
         searchQuery.isEmpty() || it.title.startsWith(searchQuery, ignoreCase = true)
     }
@@ -75,10 +92,17 @@ fun SearchScreen(navController: NavController) {
     }
 }
 
+
 @Composable
 fun SearchMovieCard(movie: Movie, navController: NavController, context: Context) {
-    val resId = remember(movie.posterName) {
-        context.resources.getIdentifier(movie.posterName, "drawable", context.packageName)
+    val isUrl = movie.posterName.startsWith("/") || movie.posterName.startsWith("http")
+    val poster = if (isUrl) {
+        rememberAsyncImagePainter("https://image.tmdb.org/t/p/w500${movie.posterName}")
+    } else {
+        val resId = remember(movie.posterName) {
+            context.resources.getIdentifier(movie.posterName, "drawable", context.packageName)
+        }
+        painterResource(id = resId)
     }
 
     Row(
@@ -87,14 +111,14 @@ fun SearchMovieCard(movie: Movie, navController: NavController, context: Context
             .background(color = lightblack, shape = MaterialTheme.shapes.medium)
             .clickable {
                 navController.navigate(
-                    "movieDetails/${movie.title}/${movie.posterName}/${movie.rating}/${movie.description}"
+                    "movieDetails/${Uri.encode(movie.title)}/${Uri.encode(movie.posterName)}/${movie.rating}/${Uri.encode(movie.description)}"
                 )
             }
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = rememberAsyncImagePainter(resId),
+            painter = poster,
             contentDescription = null,
             modifier = Modifier
                 .size(100.dp)
@@ -128,3 +152,4 @@ fun SearchMovieCard(movie: Movie, navController: NavController, context: Context
 
     Spacer(modifier = Modifier.height(12.dp))
 }
+
