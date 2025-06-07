@@ -1,5 +1,6 @@
 package com.example.movienew.data
 
+import android.util.Log
 import com.example.movienew.model.Movie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,6 +12,8 @@ object GitHubJsonFetcher {
         val jsonUrl =
             "https://raw.githubusercontent.com/Binukalewke/Dream_Land_Json/refs/heads/main/movies.json"
         val response = URL(jsonUrl).readText() // still runs on IO thread safely
+
+        Log.d("GitHubFetch", "Movies JSON fetched from GitHub successfully")
 
         val movieList = mutableListOf<Movie>()
         val jsonArray = JSONArray(response)
