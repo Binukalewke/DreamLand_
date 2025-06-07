@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -143,8 +144,10 @@ fun ContactItem(icon: ImageVector, text: String) {
     }
 
     if (showPermissionDeniedToast) {
-        Toast.makeText(context, "Call permission denied", Toast.LENGTH_SHORT).show()
-        showPermissionDeniedToast = false
+        LaunchedEffect(Unit) {
+            Toast.makeText(context, "Call permission denied", Toast.LENGTH_SHORT).show()
+            showPermissionDeniedToast = false
+        }
     }
 
     Row(
@@ -191,4 +194,5 @@ fun ContactItem(icon: ImageVector, text: String) {
         )
     }
 }
+
 
